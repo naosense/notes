@@ -74,6 +74,59 @@ img {
 <li>二维：矩阵(matrix)，数据框(dataframe)</li>
 <li>n维：数组(array)</li>
 </ul>
+<p>向量有三个共同的属性，</p>
+<ul>
+<li>类型，typeof()</li>
+<li>长度，元素的个数，length()</li>
+<li>属性，attributes</li>
+</ul>
+<p>向量的元素类型必须相同，列表(list)可以不同</p>
+<p>要判断一个对象是否是向量，不能使用is.vector()而要用is.atomic() || is.list()</p>
+</div>
+<div id="atomic-vector" class="section level4">
+<h4>2.1.1 原子向量(atomic vector)</h4>
+<p>向量共有六种类型，分别为logical、integer、double、character、complex、raw，integer类型数字后面加L后缀，另外c()函数不起作用，向量永远是平的。缺失值为NA，注意NA也有logical、integer等之分。</p>
+</div>
+<div class="section level4">
+<h4>2.1.1.1 向量类型测试</h4>
+<ul>
+<li>is.logical()</li>
+<li>is.integer()</li>
+<li>is.double()</li>
+<li>is.character()</li>
+<li>is.atomic()</li>
+<li>is.numeric()</li>
+</ul>
+</div>
+<div class="section level4">
+<h4>2.1.1.2 强制转换</h4>
+<p>因为向量的元素类型必须一致，所以当类型不一致时就会进行转换，顺序为logical&gt;integer&gt;double&gt;character</p>
+</div>
+<div id="list" class="section level4">
+<h4>2.1.2 列表(list)</h4>
+<pre class="r"><code>x &lt;- list(1:3, &quot;a&quot;, c(TRUE, FALSE, TRUE), c(2.3, 5.9))
+str(x)</code></pre>
+<pre><code>## List of 4
+##  $ : int [1:3] 1 2 3
+##  $ : chr &quot;a&quot;
+##  $ : logi [1:3] TRUE FALSE TRUE
+##  $ : num [1:2] 2.3 5.9</code></pre>
+<p>c()会把元素拆开为独立的个体，list可以保留元素的固有类型，</p>
+<pre class="r"><code>x &lt;- list(list(1, 2), c(3, 4))
+y &lt;- c(list(1, 2), c(3, 4))
+str(x)</code></pre>
+<pre><code>## List of 2
+##  $ :List of 2
+##   ..$ : num 1
+##   ..$ : num 2
+##  $ : num [1:2] 3 4</code></pre>
+<pre class="r"><code>str(y)</code></pre>
+<pre><code>## List of 4
+##  $ : num 1
+##  $ : num 2
+##  $ : num 3
+##  $ : num 4</code></pre>
+<p>将列表转换为向量使用unlist(),向量转为列表使用as.list()</p>
 </div>
 <div class="section level4">
 <h4>2.1.3 作业</h4>
@@ -103,6 +156,204 @@ img {
 <pre class="r"><code>&quot;one&quot; &lt; 2</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <p>6.为什么NA是一个逻辑向量？</p>
+</div>
+<div class="section level4">
+<h4>2.2 属性</h4>
+<p>对象可以有任何的属性。属性可以看做一个带有名字的列表，通过attr()和attributes()访问。</p>
+<pre class="r"><code>y &lt;- 1:10
+attr(y, &quot;my_attribute&quot;) &lt;- &quot;This is a vector&quot;
+attr(y, &quot;my_attribute&quot;)</code></pre>
+<pre><code>## [1] &quot;This is a vector&quot;</code></pre>
+<pre class="r"><code>str(attributes(y))</code></pre>
+<pre><code>## List of 1
+##  $ my_attribute: chr &quot;This is a vector&quot;</code></pre>
+<p>structure()函数可以返回一个拥有新属性的对象，经常用在面向对象编程方面。</p>
+<pre class="r"><code>structure(1:10, my_attribute = &quot;This is a vector&quot;)</code></pre>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10
+## attr(,&quot;my_attribute&quot;)
+## [1] &quot;This is a vector&quot;</code></pre>
+<p>默认情况下，当修改一个向量时它的大部分属性会随之消失，</p>
+<pre class="r"><code>attributes(y[1])</code></pre>
+<pre><code>## NULL</code></pre>
+<p>除了三个属性，</p>
+<ul>
+<li>名字，name()</li>
+<li>维度，dim()</li>
+<li>类，class()</li>
+</ul>
+</div>
+<div class="section level4">
+<h4>2.2.0.1 名字</h4>
+<p>设置名字有三种方式，</p>
+<ul>
+<li>x &lt;- c(a = 1, b = 2, c = 3).</li>
+<li>x &lt;- 1:3; names(x) &lt;- c(“a”, “b”, “c”)</li>
+<li>x &lt;- setNames(1:3, c(“a”, “b”, “c”))</li>
+</ul>
+<p>名字不必唯一，但是取对象子集需要一个唯一的名字。</p>
+<p>如果一个向量的元素有些没有名字，那么对于这些元素names()将返回空字符，注意不是NULL，如果所有元素都没有名字，那么names()将返回NULL，</p>
+<pre class="r"><code>y &lt;- c(a = 1, 2, 3)
+names(y)</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;&quot;  &quot;&quot;</code></pre>
+<pre class="r"><code>z &lt;- c(1, 2, 3)
+names(z)</code></pre>
+<pre><code>## NULL</code></pre>
+<p>去掉一个向量的名字可以使用unname()或者names(x) &lt;- NULL</p>
+</div>
+<div class="section level4">
+<h4>2.2.1 因子</h4>
+<p>因子只能取一些预定义好的值(levels)，因子内部存储的实际是整型值(integer)，因子有两个重要的属性，class和levels，</p>
+<pre class="r"><code>x &lt;- factor(c(&quot;a&quot;, &quot;b&quot;, &quot;b&quot;, &quot;a&quot;))
+x</code></pre>
+<pre><code>## [1] a b b a
+## Levels: a b</code></pre>
+<pre class="r"><code>class(x)</code></pre>
+<pre><code>## [1] &quot;factor&quot;</code></pre>
+<pre class="r"><code>typeof(x)</code></pre>
+<pre><code>## [1] &quot;integer&quot;</code></pre>
+<pre class="r"><code>levels(x)</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;b&quot;</code></pre>
+<pre class="r"><code># &quot;c&quot;不属于levels
+x[2] &lt;- &quot;c&quot;</code></pre>
+<pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, 2, value = &quot;c&quot;): invalid factor level, NA
+## generated</code></pre>
+<pre class="r"><code>x</code></pre>
+<pre><code>## [1] a    &lt;NA&gt; b    a   
+## Levels: a b</code></pre>
+<pre class="r"><code># 拼接factor没有意义
+c(factor(&quot;a&quot;), factor(&quot;b&quot;))</code></pre>
+<pre><code>## [1] 1 1</code></pre>
+<p>使用factor可以更直观的显示，</p>
+<pre class="r"><code>sex_char &lt;- c(&quot;m&quot;, &quot;m&quot;, &quot;m&quot;)
+sex_factor &lt;- factor(sex_char, levels = c(&quot;m&quot;, &quot;f&quot;))</code></pre>
+<p>如果想以character的方式处理factor，最好显式的转换。</p>
+</div>
+<div id="-1" class="section level4">
+<h4>2.2.2 作业</h4>
+<p>1.为什么comment属性没有打印出来，</p>
+<pre class="r"><code>structure(1:5, comment = &quot;my attribute&quot;)</code></pre>
+<pre><code>## [1] 1 2 3 4 5</code></pre>
+<p>一些特殊的属性例如class、comment将会特殊对待，comment不会被print打印</p>
+<p>2.当你修改一个因子的levels会怎么样？</p>
+<pre class="r"><code>f1 &lt;- factor(letters)
+str(f1)</code></pre>
+<pre><code>##  Factor w/ 26 levels &quot;a&quot;,&quot;b&quot;,&quot;c&quot;,&quot;d&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
+<pre class="r"><code>table(f1)</code></pre>
+<pre><code>## f1
+## a b c d e f g h i j k l m n o p q r s t u v w x y z 
+## 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</code></pre>
+<pre class="r"><code>levels(f1) &lt;- rev(levels(f1))
+str(f1)</code></pre>
+<pre><code>##  Factor w/ 26 levels &quot;z&quot;,&quot;y&quot;,&quot;x&quot;,&quot;w&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...</code></pre>
+<pre class="r"><code>table(f1)</code></pre>
+<pre><code>## f1
+## z y x w v u t s r q p o n m l k j i h g f e d c b a 
+## 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</code></pre>
+<p>显示顺序会变化，内部的映射关系会变化。</p>
+<p>3.下面的代码和f1相同吗？</p>
+<p>f2与f1levels不同，f3与f1的值不同</p>
+</div>
+<div id="matrix-array" class="section level4">
+<h4>2.3 矩阵和数组(matrix, array)</h4>
+<p>数组其实是拥有dim属性的向量，而矩阵是数组的一种特殊形式：二维数组。</p>
+<p>length()和names()在多维情况下有更具体的形式，</p>
+<ul>
+<li>length(),对于矩阵有nrow(),ncol()，且length=nrow*ncol，对于数组有dim()</li>
+<li>names(),对于矩阵有rownames()和colnames(),对于数组有dimnames()</li>
+</ul>
+<p>注意一点，不是仅有vector是一维的，matrix和array也可以一维，但是它们的输出和处理是不同，这一点尤为注意。</p>
+<pre class="r"><code>str(1:3) # 1d vector</code></pre>
+<pre><code>##  int [1:3] 1 2 3</code></pre>
+<pre class="r"><code>#&gt; int [1:3] 1 2 3
+str(matrix(1:3, ncol = 1)) # column vector</code></pre>
+<pre><code>##  int [1:3, 1] 1 2 3</code></pre>
+<pre class="r"><code>#&gt; int [1:3, 1] 1 2 3
+str(matrix(1:3, nrow = 1)) # row vector</code></pre>
+<pre><code>##  int [1, 1:3] 1 2 3</code></pre>
+<pre class="r"><code>#&gt; int [1, 1:3] 1 2 3
+str(array(1:3, 3)) # &quot;array&quot; vector</code></pre>
+<pre><code>##  int [1:3(1d)] 1 2 3</code></pre>
+<pre class="r"><code>#&gt; int [1:3(1d)] 1 2 3</code></pre>
+<p>不只向量可以添加dim属性，列表也可以添加，然后构成列表矩阵或列表数组，</p>
+<pre class="r"><code>l &lt;- list(1:3, &quot;a&quot;, TRUE, 1.0)
+dim(l) &lt;- c(2, 2)
+l</code></pre>
+<pre><code>##      [,1]      [,2]
+## [1,] Integer,3 TRUE
+## [2,] &quot;a&quot;       1</code></pre>
+</div>
+<div id="-2" class="section level4">
+<h4>2.3.1 作业</h4>
+<p>1.dim(向量)返回什么？</p>
+<p>NULL</p>
+<p>2.如果is.matrix(x)返回TRUE，is.array(x)返回什么？</p>
+<p>返回TRUE，is.matrix只要dim属性的length为2就返回TRUE，is.array只要dim属性的length大于0就返回TRUE</p>
+<p>3.下面的对象与1:5有什么区别？</p>
+<p>1:5没有dim属性</p>
+</div>
+<div id="dataframe" class="section level4">
+<h4>2.4 数据框(dataframe)</h4>
+<p>本质上一个数据框是一个列表，这些列表的元素是length相同的向量，所以它具有matrix和list的特点。对于数据框，</p>
+<ul>
+<li>和矩阵一样，拥有names，rownames，colnames，并且names=colnames，但是对于矩阵names和colnames不同。</li>
+<li>和列表一样，拥有length，nrow，ncol，且length=ncol，对于矩阵length=ncol*nrow。</li>
+</ul>
+</div>
+<div class="section level4">
+<h4>2.4.1 创建一个数据框</h4>
+<pre class="r"><code>df &lt;- data.frame(x = 1:3, y = c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
+str(df)</code></pre>
+<pre><code>## 'data.frame':    3 obs. of  2 variables:
+##  $ x: int  1 2 3
+##  $ y: Factor w/ 3 levels &quot;a&quot;,&quot;b&quot;,&quot;c&quot;: 1 2 3</code></pre>
+<p>默认情况下，data.frame将character转换为factor，使用stringAsFactors = FALSE参数来禁止这一点。</p>
+</div>
+<div class="section level4">
+<h4>2.4.2 检测类型和强制转换</h4>
+<p>数据框是一个S3对象，它本质上是一个list。</p>
+<pre class="r"><code>typeof(df)</code></pre>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<pre class="r"><code>#&gt; [1] &quot;list&quot;
+class(df)</code></pre>
+<pre><code>## [1] &quot;data.frame&quot;</code></pre>
+<pre class="r"><code>#&gt; [1] &quot;data.frame&quot;
+is.data.frame(df)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>#&gt; [1] TRUE</code></pre>
+<p>可以使用as.data.frame()将向量、列表等转换为数据框，规则为</p>
+<ul>
+<li>向量将会转为一个只有一列的数据框</li>
+<li>列表的每一个元素将会转为一列，元素的length必须相同，不同时可以使用I()函数就行修正</li>
+<li>矩阵将会转为一个相似的数据框</li>
+</ul>
+<pre class="r"><code># data.frame(x = 1:3, y = list(1:2, 1:3, 1:4))
+dfl &lt;- data.frame(x = 1:3, y = I(list(1:2, 1:3, 1:4)))
+str(dfl)</code></pre>
+<pre><code>## 'data.frame':    3 obs. of  2 variables:
+##  $ x: int  1 2 3
+##  $ y:List of 3
+##   ..$ : int  1 2
+##   ..$ : int  1 2 3
+##   ..$ : int  1 2 3 4
+##   ..- attr(*, &quot;class&quot;)= chr &quot;AsIs&quot;</code></pre>
+</div>
+<div class="section level4">
+<h4>2.4.3 拼接数据框</h4>
+<ul>
+<li>cbind，当进行列拼接时，行数必须相同</li>
+<li>rbind，当进行行拼接时，列名和列数都必须相同</li>
+</ul>
+<p>注意将向量进行cbind不会成为一个数据框而是一个矩阵，这种情况下直接使用data.frame()</p>
+</div>
+<div id="-3" class="section level4">
+<h4>2.4.5 作业</h4>
+<p>1.一个数据框有哪些属性</p>
+<p>names=colnames，row.names()，class</p>
+<p>2.as.matrix()作用于一个列类型数据框将会如何？</p>
+<p>强制转换，参考c()</p>
+<p>3.一个数据框可以是0行吗，可以是0列吗？</p>
+<pre class="r"><code>data.frame()</code></pre>
+<pre><code>## data frame with 0 columns and 0 rows</code></pre>
 </div>
 </div>
 
