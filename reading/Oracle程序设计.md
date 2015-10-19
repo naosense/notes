@@ -83,9 +83,9 @@ SPOOL OFF
 自定义文件位置*$ORACLE_HOME/sqlplus/admin/glogin.sql*，常用的设置项为
 
 - SET PAGESIZE 999
-- SET LINESIZE 132
+- SET LINESIZE 132，设置一行显示的最大字符
 - SET SERVEROUTPUT ON：默认情况下不输出DBMS_OUTPUT的输出
-- DEFINE _EDITOR = 完整路径
+- DEFINE _EDITOR = 完整路径，设置sqlplus的默认编辑器
 
 错误处理，默认情况下，sqlplus报告错误然后会继续执行，通过`WHENEVER SQLERROR EXIT SQL.SQLCODE`来设置当sqlplus遇到错误时将终止程序。
 
@@ -139,3 +139,83 @@ BEGIN ...一个或多个执行语句...
 ...异常处理语句...]
 END;
 ```
+
+匿名块的用处：
+
+- 数据库触发器
+- 即席命令（ad hoc）和脚本文件，EXECUTE命令最终会翻译为一个匿名块
+- 编译后的3GL程序，匿名块可以嵌入到这些程序中来调用存储程序
+
+嵌套块
+
+```sql
+PROCEDURE calc_totals
+IS 
+  year_total NUMBER;
+BEGIN
+  year_total := 0;
+  -- 嵌套块开始
+  BEGIN
+    month_total := year_total / 12;
+  END set_month_total;
+END;
+```
+
+**规范sql中对变量和列的引用**
+对变量和列的引用要通过表的别名、包名、过程名、嵌套块标签进行规范化，这样做的好处，
+
+- 可读性
+- 避免变量名和列名一样时出现bug，Oracle数据库首先会把不规范的标示符当做列名来解释
+- 充分利用oracle 11g细粒度依赖这一特性
+
+```sql
+PACKAGE scope_demo
+IS 
+  g_global NUMBER;
+  PROCEDURE set_global(number_in IN NUMBER);
+END scope_demo;
+
+PACKAGE BODY scope_demo
+IS
+  PROCEDURE set_global(number_in IN NUMBER)
+  IS
+    l_salary NUMBER := 10000;
+    l_count PLS_INTEGER;
+  BEGIN
+    <<local_block>>
+    DECLARE
+      l_inner PLS_INTEGER;
+    BEGIN
+      SELECT COUNT(*)
+        INTO set_global.l_couunt
+        FROM employee e
+        WHERE e.depart_id = localblock.l_inner
+        AND e.salary > set_global.l_salary;
+     END localblock;
+     
+     scope_demo.g_global := set_global.num_in;
+  END set_global;
+```
+2.字符集
+
+- ;代表一个语句的结束
+- %属性指示符，游标属性（%ISOPEN），间接声明属性（%ROWTYPE），也可作like中的通配符
+- _单个下划线，like中任意单个字符的通配符
+- @远程位置指示符
+- :冒号宿主变量指示符，:block.item
+- \**双星号，幂运算符
+- <>或!=不等于
+- ||拼接操作符
+- <<>>标签分隔符
+- :=赋值操作符
+- =>位置表示法关联操作符
+- ..两个句点，范围操作符
+
+字符组成了词法单位，也称为语言的原子，PLSQL中一个词法单位可以是，
+
+- 标示符，最多30个字符，必须字母开始，可以使用$、#、_，不能有空白
+- 直接量，包括数字、字符串、时间间隔、布尔值等
+- 分隔符
+- 注释
+
+
