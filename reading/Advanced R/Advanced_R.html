@@ -493,6 +493,111 @@ x[upper.tri(x)]</code></pre>
 <p>6.df[is.na(df)] &lt;- 0是什么意思？</p>
 <p>将df中NA值替换为0</p>
 </div>
+<div id="subsetting" class="section level4">
+<h4>3.2 subsetting操作符</h4>
+<pre class="r"><code># If you do supply a vector it indexes recursively
+b &lt;- list(a = list(b = list(c = list(d = 1))))
+b[[c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;)]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code># Same as
+b[[&quot;a&quot;]][[&quot;b&quot;]][[&quot;c&quot;]][[&quot;d&quot;]]</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>[,[[,$,对于s3和s4表现不同，</p>
+<blockquote>
+<p>The key difference is usually how you select between simplifying or preserving behaviours, and what the default is.</p>
+</blockquote>
+</div>
+<div id="simplifying-vs.preserving-subsetting" class="section level4">
+<h4>3.2.1 Simplifying vs. preserving subsetting</h4>
+<ul>
+<li>Simplifying subsets returns the simplest possible data structure that can represent the output, and is useful interactively.</li>
+<li>Preserving subsetting keeps the structure of the output the same as the input, and is generally better for programming because the result will always be the same type.</li>
+</ul>
+<p>simplify preserving</p>
+<ul>
+<li>vector和list:x[[1]],x[1]</li>
+<li>factor：x[1:4, drop=T],x[1:4]</li>
+<li>array:x[1, ]或x[, 1],x[1, drop=F]或x[, 1, drop=F]</li>
+<li>dataframe:x[, 1]或x[[1]], x[, 1, drop=F]或x[1]</li>
+</ul>
+</div>
+<div id="section" class="section level4">
+<h4>3.2.2 $</h4>
+<p><span class="math">\(是一个简化的操作符，可以部分匹配属性名，x\)</span>y相当于x[[“y”, exact= FALSE]]</p>
+</div>
+<div id="subsetting-and-assignment" class="section level4">
+<h4>3.3 subsetting and assignment</h4>
+<pre class="r"><code># Subsetting with nothing can be useful in conjunction with assignment
+# return dataframe
+mtcars[] &lt;- lapply(mtcars, as.integer)
+# return list
+mtcars &lt;- lapply(mtcars, as.integer)</code></pre>
+<pre class="r"><code># 使用subseting+assignment+NULL来删除list的元素
+x &lt;- list(a = 1, b = 2)
+x[[&quot;b&quot;]] &lt;- NULL
+str(x)</code></pre>
+<pre><code>## List of 1
+##  $ a: num 1</code></pre>
+<pre class="r"><code># 添加NULL到list，使用list(NULL)
+y &lt;- list(a = 1)
+y[&quot;b&quot;] &lt;- list(NULL)
+str(y)</code></pre>
+<pre><code>## List of 2
+##  $ a: num 1
+##  $ b: NULL</code></pre>
+</div>
+<div class="section level4">
+<h4>3.4 应用</h4>
+</div>
+<div id="character-subsetting" class="section level4">
+<h4>3.4.1 character subsetting</h4>
+<pre class="r"><code>x &lt;- c(&quot;m&quot;, &quot;f&quot;, &quot;u&quot;, &quot;f&quot;, &quot;f&quot;, &quot;m&quot;, &quot;m&quot;)
+lookup &lt;- c(m = &quot;Male&quot;, f = &quot;Female&quot;, u = NA)
+lookup[x]</code></pre>
+<pre><code>##        m        f        u        f        f        m        m 
+##   &quot;Male&quot; &quot;Female&quot;       NA &quot;Female&quot; &quot;Female&quot;   &quot;Male&quot;   &quot;Male&quot;</code></pre>
+</div>
+<div id="integer-subsetting" class="section level4">
+<h4>3.4.2 integer subsetting</h4>
+<pre class="r"><code>grades &lt;- c(1, 2, 2, 3, 1)
+info &lt;- data.frame(
+grade = 3:1,
+desc = c(&quot;Excellent&quot;, &quot;Good&quot;, &quot;Poor&quot;),
+fail = c(F, F, T)
+)
+
+# 第一种方法Using match
+id &lt;- match(grades, info$grade)
+info[id, ]</code></pre>
+<pre><code>##     grade      desc  fail
+## 3       1      Poor  TRUE
+## 2       2      Good FALSE
+## 2.1     2      Good FALSE
+## 1       3 Excellent FALSE
+## 3.1     1      Poor  TRUE</code></pre>
+<pre class="r"><code># 第二种方法Using rownames
+rownames(info) &lt;- info$grade
+info[as.character(grades), ]</code></pre>
+<pre><code>##     grade      desc  fail
+## 1       1      Poor  TRUE
+## 2       2      Good FALSE
+## 2.1     2      Good FALSE
+## 3       3 Excellent FALSE
+## 1.1     1      Poor  TRUE</code></pre>
+</div>
+<div id="logical-subsetting" class="section level4">
+<h4>3.4.7 logical subsetting</h4>
+<p>mtcars[mtcars$gear == 5, ]</p>
+</div>
+<div id="-5" class="section level4">
+<h4>3.4.9 作业</h4>
+<p>1.如何随机排列一个数据框的列？</p>
+<p>mtcars[, sample(ncol(mtcars))]</p>
+<p>2.如何随机选择m行</p>
+<p>mtcars[sample(nrows(mtcars), m), ]</p>
+<p>3.如何将数据框的列按字母顺序排列？</p>
+<p>mtcars[, order(colnames(mtcars))]</p>
+</div>
 </div>
 
 

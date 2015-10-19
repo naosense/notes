@@ -865,6 +865,166 @@ x[upper.tri(x)]
 
 将df中NA值替换为0
 
+#### 3.2 subsetting操作符
+
+
+```r
+# If you do supply a vector it indexes recursively
+b <- list(a = list(b = list(c = list(d = 1))))
+b[[c("a", "b", "c", "d")]]
+```
+
+```
+## [1] 1
+```
+
+```r
+# Same as
+b[["a"]][["b"]][["c"]][["d"]]
+```
+
+```
+## [1] 1
+```
+
+[,[[,$,对于s3和s4表现不同，
+
+> The key difference is usually how you select between simplifying or preserving behaviours, and what the default is.
+
+#### 3.2.1 Simplifying vs. preserving subsetting
+
+- Simplifying subsets returns the simplest possible data structure that can represent the output, and is useful interactively.
+- Preserving subsetting keeps the structure of the output the same as the input, and is generally better for programming because the result will always be the same type.
+
+simplify preserving
+
+- vector和list:x[[1]],x[1]
+- factor：x[1:4, drop=T],x[1:4]
+- array:x[1, ]或x[, 1],x[1, drop=F]或x[, 1, drop=F]
+- dataframe:x[, 1]或x[[1]], x[, 1, drop=F]或x[1]
+
+#### 3.2.2 $
+
+$是一个简化的操作符，可以部分匹配属性名，x$y相当于x[["y", exact= FALSE]]
+
+#### 3.3 subsetting and assignment
+
+
+```r
+# Subsetting with nothing can be useful in conjunction with assignment
+# return dataframe
+mtcars[] <- lapply(mtcars, as.integer)
+# return list
+mtcars <- lapply(mtcars, as.integer)
+```
+
+
+```r
+# 使用subseting+assignment+NULL来删除list的元素
+x <- list(a = 1, b = 2)
+x[["b"]] <- NULL
+str(x)
+```
+
+```
+## List of 1
+##  $ a: num 1
+```
+
+```r
+# 添加NULL到list，使用list(NULL)
+y <- list(a = 1)
+y["b"] <- list(NULL)
+str(y)
+```
+
+```
+## List of 2
+##  $ a: num 1
+##  $ b: NULL
+```
+
+#### 3.4 应用
+
+#### 3.4.1 character subsetting
+
+
+```r
+x <- c("m", "f", "u", "f", "f", "m", "m")
+lookup <- c(m = "Male", f = "Female", u = NA)
+lookup[x]
+```
+
+```
+##        m        f        u        f        f        m        m 
+##   "Male" "Female"       NA "Female" "Female"   "Male"   "Male"
+```
+
+#### 3.4.2 integer subsetting
+
+
+```r
+grades <- c(1, 2, 2, 3, 1)
+info <- data.frame(
+grade = 3:1,
+desc = c("Excellent", "Good", "Poor"),
+fail = c(F, F, T)
+)
+
+# 第一种方法Using match
+id <- match(grades, info$grade)
+info[id, ]
+```
+
+```
+##     grade      desc  fail
+## 3       1      Poor  TRUE
+## 2       2      Good FALSE
+## 2.1     2      Good FALSE
+## 1       3 Excellent FALSE
+## 3.1     1      Poor  TRUE
+```
+
+```r
+# 第二种方法Using rownames
+rownames(info) <- info$grade
+info[as.character(grades), ]
+```
+
+```
+##     grade      desc  fail
+## 1       1      Poor  TRUE
+## 2       2      Good FALSE
+## 2.1     2      Good FALSE
+## 3       3 Excellent FALSE
+## 1.1     1      Poor  TRUE
+```
+
+#### 3.4.7 logical subsetting
+
+mtcars[mtcars$gear == 5, ]
+
+#### 3.4.9 作业
+
+1.如何随机排列一个数据框的列？
+
+mtcars[, sample(ncol(mtcars))]
+
+2.如何随机选择m行
+
+mtcars[sample(nrows(mtcars), m), ]
+
+3.如何将数据框的列按字母顺序排列？
+
+mtcars[, order(colnames(mtcars))]
+
+
+
+
+
+
+
+
 
 
 
