@@ -582,6 +582,79 @@ mtcars[sample(nrows(mtcars), m), ]
 
 mtcars[, order(colnames(mtcars))]
 
+### 6.函数
+
+#### 6.1 函数组成
+
+有三部分组成，
+
+- body()：函数体
+- formals():参数
+- environment():函数变量所在的位置
+
+```{r}
+f <- function(x) x^2
+f
+formals(f)
+body(f)
+environment(f)
+
+```
+
+和R语言的其他对象一样，函数也可以拥有任意数量的attributes()
+
+#### 6.1.1 原始函数(primitive function)
+
+原始函数是一个例外，它没有上述三个组成部分，它通过.Primitive()直接调用c函数，它只存在base包中
+
+#### 6.1.2 作业
+
+1.如何检测一个对象是函数？原始函数呢？
+
+is.function()
+is.primitive()
+
+2.下面的代码返回base包里的所有函数，
+
+```{r}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+
+```
+
+- 哪个函数参数最多？
+
+```{r}
+formals_length <- unlist(lapply(funs, function(x)length(formals(x))))
+which.max(formals_length)
+
+```
+
+- 有多少函数没有参数？这些函数有什么特点？
+
+```{r}
+sum(formals_length == 0)
+
+```
+
+它们有的是原始函数，有的是无参数函数
+
+- 怎样修改代码来查找所有的原始函数？
+
+```{r}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.primitive, objs)
+length(funs)
+
+```
+
+3.函数的三个组成部分？
+
+body,formals,environment
+
+4.什么情况下不会打印函数的环境？
+
+原始函数
 
 
 

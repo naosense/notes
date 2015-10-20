@@ -599,6 +599,60 @@ info[as.character(grades), ]</code></pre>
 <p>mtcars[, order(colnames(mtcars))]</p>
 </div>
 </div>
+<div class="section level3">
+<h3>6.函数</h3>
+<div class="section level4">
+<h4>6.1 函数组成</h4>
+<p>有三部分组成，</p>
+<ul>
+<li>body()：函数体</li>
+<li>formals():参数</li>
+<li>environment():函数变量所在的位置</li>
+</ul>
+<pre class="r"><code>f &lt;- function(x) x^2
+f</code></pre>
+<pre><code>## function(x) x^2</code></pre>
+<pre class="r"><code>formals(f)</code></pre>
+<pre><code>## $x</code></pre>
+<pre class="r"><code>body(f)</code></pre>
+<pre><code>## x^2</code></pre>
+<pre class="r"><code>environment(f)</code></pre>
+<pre><code>## &lt;environment: R_GlobalEnv&gt;</code></pre>
+<p>和R语言的其他对象一样，函数也可以拥有任意数量的attributes()</p>
+</div>
+<div id="primitive-function" class="section level4">
+<h4>6.1.1 原始函数(primitive function)</h4>
+<p>原始函数是一个例外，它没有上述三个组成部分，它通过.Primitive()直接调用c函数，它只存在base包中</p>
+</div>
+<div id="-6" class="section level4">
+<h4>6.1.2 作业</h4>
+<p>1.如何检测一个对象是函数？原始函数呢？</p>
+<p>is.function() is.primitive()</p>
+<p>2.下面的代码返回base包里的所有函数，</p>
+<pre class="r"><code>objs &lt;- mget(ls(&quot;package:base&quot;), inherits = TRUE)
+funs &lt;- Filter(is.function, objs)</code></pre>
+<ul>
+<li>哪个函数参数最多？</li>
+</ul>
+<pre class="r"><code>formals_length &lt;- unlist(lapply(funs, function(x)length(formals(x))))
+which.max(formals_length)</code></pre>
+<pre><code>## scan 
+##  932</code></pre>
+<ul>
+<li>有多少函数没有参数？这些函数有什么特点？</li>
+</ul>
+<pre class="r"><code>sum(formals_length == 0)</code></pre>
+<pre><code>## [1] 225</code></pre>
+<p>它们有的是原始函数，有的是无参数函数</p>
+<ul>
+<li>怎样修改代码来查找所有的原始函数？</li>
+</ul>
+<pre class="r"><code>objs &lt;- mget(ls(&quot;package:base&quot;), inherits = TRUE)
+funs &lt;- Filter(is.primitive, objs)
+length(funs)</code></pre>
+<pre><code>## [1] 183</code></pre>
+</div>
+</div>
 
 
 </div>
