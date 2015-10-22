@@ -613,7 +613,7 @@ data.frame()
 
 ### 3.Subsetting
 
-### 3.1.1 向量
+#### 3.1.1 向量
 
 
 ```r
@@ -1122,6 +1122,752 @@ length(funs)
 ## [1] 183
 ```
 
+3.函数的三个组成部分？
+
+body,formals,environment
+
+4.什么情况下不会打印函数的环境？
+
+原始函数
+
+#### 6.2 词法作用域(lexical scoping)
+
+R语言有两种作用域，
+
+> - lexical scoping, implemented automatically at the language level
+> - dynamic scoping, used in select functions to save typing during interactive analysis
+
+lexical scoping意思是去函数创建的地方去寻找它而不是调用它的地方，dynamic scoping意思是在函数调用的时候去寻找而不是创建的时候。
+
+词法作用域实现有四个法则，
+
+- 名称覆盖(name mask)
+- 函数和变量(function vs variable)
+- 从新开始(fresh start)
+- 动态查找(dynamic lookup)
+
+#### 6.2.1 名称覆盖
+
+
+```r
+x <- 2
+g <- function() {
+y <- 1
+c(x, y)
+}
+g()
+```
+
+```
+## [1] 2 1
+```
+
+
+
+```r
+j <- function(x) {
+y <- 2
+function() {
+c(x, y)
+}
+}
+k <- j(1)
+k()
+```
+
+```
+## [1] 1 2
+```
+
+#### 6.2.2 函数和变量
+
+
+```r
+n <- function(x) x / 2
+o <- function() {
+n <- 10
+n(n)
+}
+o()
+```
+
+```
+## [1] 5
+```
+
+#### 6.2.3 从新开始
+
+
+```r
+j <- function() {
+if (!exists("a")) {
+a <- 1
+} else {
+a <- a + 1
+}
+print(a)
+}
+```
+
+每次调用j都会创建一个新的环境，因此函数a永远为1
+
+#### 6.2.4 动态查找
+
+lexing scope决定去哪里寻找对象，dynamic scoping决定什么时候去寻找。这意味着函数的输出有可能因为自身环境外的变量不同而不同。
+
+
+```r
+f <- function() x
+x <- 15
+f()
+```
+
+```
+## [1] 15
+```
+
+```r
+x <- 20
+f()
+```
+
+```
+## [1] 20
+```
+
+这样的函数应该避免，因为它不是自包含的。
+
+#### 6.2.5 作业
+
+3.下面的函数会输出什么？
+
+
+```r
+f <- function(x) {
+    f <- function(x) {
+        f <- function(x) {
+            x ^ 2
+        }
+        f(x) + 1
+    }
+    f(x) * 2
+}
+f(10)
+```
+
+```
+## [1] 202
+```
+
+#### 6.3 每一个操作都是一个函数调用
+
+- 万物皆为对象
+- 万事皆为函数
+
+
+```r
+add <- function(x, y) x + y
+sapply(1:10, add, 3)
+```
+
+```
+##  [1]  4  5  6  7  8  9 10 11 12 13
+```
+
+```r
+# 等同于
+sapply(1:5, `+`, 3)  # 注意可以使用``引用保留的函数
+```
+
+```
+## [1] 4 5 6 7 8
+```
+
+```r
+sapply(1:5, "+", 3)  # 之所以可以起作用是因为sapply中使用了match.fun来查找函数
+```
+
+```
+## [1] 4 5 6 7 8
+```
+
+#### 6.4 函数参数
+
+#### 6.4.1 函数调用
+
+调用函数时，参数可以进行位置匹配，名称完全或不完全匹配，顺序为完全匹配，不完全匹配，位置匹配。
+
+
+```r
+f <- function(abcdef, bcde1, bcde2) {
+    list(a = abcdef, b1 = bcde1, b2 = bcde2)
+}
+str(f(1, 2, 3))
+```
+
+```
+## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3
+```
+
+```r
+str(f(2, 3, abcdef = 1))
+```
+
+```
+## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3
+```
+
+```r
+str(f(2, 3, a = 1))
+```
+
+```
+## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3
+```
+
+```r
+# But this doesn't work because abbreviation is ambiguous
+# str(f(1, 3, b = 1))
+#> Error: argument 3 matches multiple formal arguments
+```
+
+...之后的参数必须指定完整的名字。
+
+#### 6.4.2 将参数放入列表进行调用
+
+
+```r
+args <- list(1:10, na.rm = TRUE)
+do.call(mean, list(1:10, na.rm = TRUE))
+```
+
+```
+## [1] 5.5
+```
+
+```r
+# 等同于
+mean(1:10, na.rm = TRUE)
+```
+
+```
+## [1] 5.5
+```
+
+#### 6.4.3 默认和缺失参数
+
+
+```r
+# 默认值
+f <- function(a = 1, b = 2) {
+c(a, b)
+}
+# 因为惰性求值，可以根据其他参数设置默认值
+g <- function(a = 1, b = a * 2) {
+c(a, b)
+}
+g()
+```
+
+```
+## [1] 1 2
+```
+
+```r
+h <- function(a = 1, b = d) {
+d <- (a + 1) ^ 2
+c(a, b)
+}
+h()
+```
+
+```
+## [1] 1 4
+```
+
+
+```r
+# 使用missing()检测参数
+i <- function(a, b) {
+c(missing(a), missing(b))
+}
+i()
+```
+
+```
+## [1] TRUE TRUE
+```
+
+```r
+i(a = 1)
+```
+
+```
+## [1] FALSE  TRUE
+```
+
+```r
+i(b = 2)
+```
+
+```
+## [1]  TRUE FALSE
+```
+
+```r
+i(1, 2)
+```
+
+```
+## [1] FALSE FALSE
+```
+
+#### 6.4.4 惰性求值
+
+惰性求值：只有在用到时才会进行计算
+
+
+```r
+f <- function(x) {
+10
+}
+f(stop("This is an error!"))
+```
+
+```
+## [1] 10
+```
+
+```r
+# 使用force()强制进行计算
+f <- function(x) {
+force(x)
+10
+}
+
+# f(stop("This is an error!"))
+# Error: This is an error!
+# 使用lapply创建closure时特别有用
+add <- function(x) {
+    force(x)  # 去掉这句最后两句将会返回同样的值
+    function(y) x + y
+}
+adders <- lapply(1:10, add)
+adders[[1]](10)
+```
+
+```
+## [1] 11
+```
+
+```r
+adders[[10]](10)
+```
+
+```
+## [1] 20
+```
+
+默认值只会在函数内部计算，这将导致下面的代码有所不同，
+
+
+```r
+f <- function(x = ls()) {
+a <- 1
+x
+}
+# 函数内部计算
+f()
+```
+
+```
+## [1] "a" "x"
+```
+
+```r
+# 在全局环境计算
+f(ls())
+```
+
+```
+##  [1] "add"            "adders"         "args"           "b"             
+##  [5] "df"             "dfl"            "f"              "f1"            
+##  [9] "f2"             "f3"             "formals_length" "funs"          
+## [13] "g"              "grades"         "h"              "i"             
+## [17] "id"             "info"           "j"              "k"             
+## [21] "l"              "lookup"         "mtcars"         "n"             
+## [25] "o"              "objs"           "select"         "sex_char"      
+## [29] "sex_factor"     "vals"           "x"              "x1"            
+## [33] "x2"             "x3"             "y"              "z"
+```
+
+一个没有没有计算的参数称为一个诺言(promise)，它由两部分组成，
+
+- 一个要进行计算的表达式(expression)
+- 表达式创建和运行的环境(environment)
+
+惰性求值在if中有很大的用处，
+
+
+```r
+# 如果不是惰性求值，x>0将会返回一个logical(0)，对于if这会出错
+x <- NULL
+if (!is.null(x) && x > 0) {
+}
+```
+
+#### 6.4.5 ...
+
+
+```r
+# 使用list(...)来获得...的值
+f <- function(...) {
+names(list(...))
+}
+f(a = 1, b = 2)
+```
+
+```
+## [1] "a" "b"
+```
+
+#### 6.4.6 作业
+
+2.函数将返回？为什么？有什么法则？
+
+
+```r
+f1 <- function(x = {y <- 1; 2}, y = 0) {
+x + y
+}
+f1()
+```
+
+```
+## [1] 3
+```
+
+惰性求值，第一次计算发生在函数体x+y，此时x=2，y起先为0，在计算x的过程中y<-1，所以结果为3
+
+3.函数将返回？为什么？有什么法则？
+
+
+```r
+f2 <- function(x = z) {
+z <- 100
+x
+}
+f2()
+```
+
+```
+## [1] 100
+```
+
+#### 6.5 特殊调用(special call)
+
+#### 6.5.1 infix functions
+
+所有用户自己建立的infix函数名字必须以%为起止，
+
+
+```r
+# 创建infix函数时，必须以``将函数名包围起来，这只是R语言特殊的语法糖
+`%+%` <- function(a, b) paste(a, b, sep = "")
+"new" %+% " string"
+```
+
+```
+## [1] "new string"
+```
+
+```r
+# 等同于
+`%+%`("new", " string")
+```
+
+```
+## [1] "new string"
+```
+
+```r
+# 当定义的函数名包含特殊字符时，在创建函数要进行转义，调用时不用
+`% %` <- function(a, b) paste(a, b)
+`%'%` <- function(a, b) paste(a, b)
+`%/\\%` <- function(a, b) paste(a, b)
+"a" % % "b"
+```
+
+```
+## [1] "a b"
+```
+
+```r
+"a" %'% "b"
+```
+
+```
+## [1] "a b"
+```
+
+```r
+"a" %/\% "b"
+```
+
+```
+## [1] "a b"
+```
+
+#### 6.5.2 replace functions
+
+replace function的名字也很特殊，形式为xxx<-，通常情况下有两个参数x和value，并且必须有value参数，x可以改名。
+
+
+```r
+`second<-` <- function(x, value) {
+x[2] <- value
+x
+}
+x <- 1:10
+second(x) <- 5L
+x
+```
+
+```
+##  [1]  1  5  3  4  5  6  7  8  9 10
+```
+
+从表面上看函数修改了参数x，实际上修改的只是x的一份拷贝，而不是真正的x，这种策略将会对性能产生影响。原始函数可以直接修改参数本身，例如
+
+
+```r
+x <- 1:10
+x[2] <- 7L
+```
+
+#### 6.5.3 作业
+
+1.找出base包里的所有replace函数，它们哪些是原始函数？
+
+
+```r
+r_index <- grep("*<-$", names(funs))
+names(funs)[r_index]
+```
+
+```
+##  [1] "$<-"            "@<-"            "[[<-"           "[<-"           
+##  [5] "<-"             "<<-"            "attr<-"         "attributes<-"  
+##  [9] "class<-"        "dim<-"          "dimnames<-"     "environment<-" 
+## [13] "length<-"       "levels<-"       "names<-"        "oldClass<-"    
+## [17] "storage.mode<-"
+```
+
+```r
+sapply(funs[r_index], is.primitive)
+```
+
+```
+##            $<-            @<-           [[<-            [<-             <- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##            <<-         attr<-   attributes<-        class<-          dim<- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##     dimnames<-  environment<-       length<-       levels<-        names<- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##     oldClass<- storage.mode<- 
+##           TRUE           TRUE
+```
+
+3.创建一个xor的infix函数
+
+
+```r
+`%xor%` <- function(x, y) {
+    xor(x, y)
+}
+
+T %xor% F
+```
+
+```
+## [1] TRUE
+```
+
+5.创建一个replace函数随机修改向量的某个位置
+
+
+```r
+`rr<-` <- function(y, value) {
+    y[sample(1:length(y), 1)] <- value
+    y
+}
+x <- 1:10
+rr(x) <- 5
+x
+```
+
+```
+##  [1]  1  2  3  4  5  6  7  8  9 10
+```
+
+#### 6.6 返回值
+
+可以使用return返回，没有return默认将函数最后一句的值返回，提早返回时最好使用明确的return函数，可以使函数更清晰。
+
+
+```r
+f <- function(x, y) {
+    if (!x) return(y)
+# complicated processing here
+}
+```
+
+> 纯函数的概念\n
+> 纯函数不会对工作空间产生影响，没有副作用，同样的输入产生同样的输出。
+
+
+```r
+f <- function(x) {
+x$a <- 2
+x
+}
+x <- list(a = 1)
+f(x)
+```
+
+```
+## $a
+## [1] 2
+```
+
+```r
+x
+```
+
+```
+## $a
+## [1] 1
+```
+
+这得益于copy-on-modify规则，但是environment和reference class已经修改了。
+
+大部分的R函数都是纯函数，除了下面
+
+- library()
+- setwd(), Sys.setenv(), Sys.setlocale()
+- plot()
+- write(), write.csv(), saveRDS()
+- options(), pars()
+- S4
+- 随机数发生器
+
+可以使用invisible隐藏函数的返回值，使用()强制打印函数的返回值
+
+
+```r
+f1 <- function() 1
+f2 <- function() invisible(1)
+f1()
+```
+
+```
+## [1] 1
+```
+
+```r
+f2()
+f1() == 1
+```
+
+```
+## [1] TRUE
+```
+
+```r
+f2() == 1
+```
+
+```
+## [1] TRUE
+```
+
+```r
+(f2())
+```
+
+```
+## [1] 1
+```
+
+#### 6.6.1 on.exit
+
+通常情况下，当你想在函数返回后做一些工作可以使用on.exit，比如对全局变量的恢复等。
+
+
+```r
+in_dir <- function(dir, code) {
+    old <- setwd(dir)
+    on.exit(setwd(old))
+    force(code)
+}
+getwd()
+```
+
+```
+## [1] "F:/notes/reading/Advanced R"
+```
+
+```r
+in_dir("~", getwd())
+```
+
+```
+## [1] "C:/Users/ASUS/Documents"
+```
+
+ 注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。
+ 
+ #### 6.6.2 作业
+ 
+ 2.library()没有做什么，怎样保存和恢复options和par？
+ 
+ 
+
+```r
+# op <- options(tag=value)
+# some operations
+# options(op)
+# par和options类似
+```
+
+3.打开一个图形设备，运行一些代码，然后关闭它。
+
+
+```r
+devtest <- function(code) {
+    dev.new()
+    x <- 1
+    on.exit(code)
+    x
+   
+    
+}
+
+devtest(dev.off())
+```
+
+```
+## [1] 1
+```
 
 
 

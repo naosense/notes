@@ -371,9 +371,8 @@ str(dfl)</code></pre>
 </div>
 <div id="subsetting" class="section level3">
 <h3>3.Subsetting</h3>
-</div>
-<div class="section level3">
-<h3>3.1.1 向量</h3>
+<div class="section level4">
+<h4>3.1.1 向量</h4>
 <pre class="r"><code>x &lt;- c(2.1, 4.2, 3.3, 5.4)</code></pre>
 <p>对于一个向量有五种取子集的方法，</p>
 <ul>
@@ -422,6 +421,7 @@ x[c(TRUE, FALSE, TRUE, FALSE)]</code></pre>
 <pre class="r"><code>y[c(&quot;d&quot;, &quot;c&quot;, &quot;a&quot;)]</code></pre>
 <pre><code>##   d   c   a 
 ## 5.4 3.3 2.1</code></pre>
+</div>
 <div class="section level4">
 <h4>3.1.2 列表</h4>
 <p>[返回一个list，而[[和$返回元素的类型</p>
@@ -439,9 +439,9 @@ x[c(TRUE, FALSE, TRUE, FALSE)]</code></pre>
 vals[c(4, 15)]</code></pre>
 <pre><code>## [1] &quot;4,1&quot; &quot;5,3&quot;</code></pre>
 <pre class="r"><code>select &lt;- matrix(ncol = 2, byrow = TRUE, c(
-1, 1,
-3, 1,
-2, 4
+    1, 1,
+    3, 1,
+    2, 4
 ))
 vals[select]</code></pre>
 <pre><code>## [1] &quot;1,1&quot; &quot;3,1&quot; &quot;2,4&quot;</code></pre>
@@ -561,9 +561,9 @@ lookup[x]</code></pre>
 <h4>3.4.2 integer subsetting</h4>
 <pre class="r"><code>grades &lt;- c(1, 2, 2, 3, 1)
 info &lt;- data.frame(
-grade = 3:1,
-desc = c(&quot;Excellent&quot;, &quot;Good&quot;, &quot;Poor&quot;),
-fail = c(F, F, T)
+    grade = 3:1,
+    desc = c(&quot;Excellent&quot;, &quot;Good&quot;, &quot;Poor&quot;),
+    fail = c(F, F, T)
 )
 
 # 第一种方法Using match
@@ -651,6 +651,413 @@ which.max(formals_length)</code></pre>
 funs &lt;- Filter(is.primitive, objs)
 length(funs)</code></pre>
 <pre><code>## [1] 183</code></pre>
+<p>3.函数的三个组成部分？</p>
+<p>body,formals,environment</p>
+<p>4.什么情况下不会打印函数的环境？</p>
+<p>原始函数</p>
+</div>
+<div id="lexical-scoping" class="section level4">
+<h4>6.2 词法作用域(lexical scoping)</h4>
+<p>R语言有两种作用域，</p>
+<blockquote>
+<ul>
+<li>lexical scoping, implemented automatically at the language level</li>
+<li>dynamic scoping, used in select functions to save typing during interactive analysis</li>
+</ul>
+</blockquote>
+<p>lexical scoping意思是去函数创建的地方去寻找它而不是调用它的地方，dynamic scoping意思是在函数调用的时候去寻找而不是创建的时候。</p>
+<p>词法作用域实现有四个法则，</p>
+<ul>
+<li>名称覆盖(name mask)</li>
+<li>函数和变量(function vs variable)</li>
+<li>从新开始(fresh start)</li>
+<li>动态查找(dynamic lookup)</li>
+</ul>
+</div>
+<div class="section level4">
+<h4>6.2.1 名称覆盖</h4>
+<pre class="r"><code>x &lt;- 2
+g &lt;- function() {
+    y &lt;- 1
+    c(x, y)
+}
+g()</code></pre>
+<pre><code>## [1] 2 1</code></pre>
+<pre class="r"><code>j &lt;- function(x) {
+    y &lt;- 2
+    function() {
+        c(x, y)
+    }
+}
+k &lt;- j(1)
+k()</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+</div>
+<div class="section level4">
+<h4>6.2.2 函数和变量</h4>
+<pre class="r"><code>n &lt;- function(x) x / 2
+o &lt;- function() {
+    n &lt;- 10
+    n(n)
+}
+o()</code></pre>
+<pre><code>## [1] 5</code></pre>
+</div>
+<div class="section level4">
+<h4>6.2.3 从新开始</h4>
+<pre class="r"><code>j &lt;- function() {
+    if (!exists(&quot;a&quot;)) {
+        a &lt;- 1
+    } else {
+        a &lt;- a + 1
+    }
+    print(a)
+}</code></pre>
+<p>每次调用j都会创建一个新的环境，因此函数a永远为1</p>
+</div>
+<div class="section level4">
+<h4>6.2.4 动态查找</h4>
+<p>lexing scope决定去哪里寻找对象，dynamic scoping决定什么时候去寻找。这意味着函数的输出有可能因为自身环境外的变量不同而不同。</p>
+<pre class="r"><code>f &lt;- function() x
+x &lt;- 15
+f()</code></pre>
+<pre><code>## [1] 15</code></pre>
+<pre class="r"><code>x &lt;- 20
+f()</code></pre>
+<pre><code>## [1] 20</code></pre>
+<p>这样的函数应该避免，因为它不是自包含的。</p>
+</div>
+<div id="-7" class="section level4">
+<h4>6.2.5 作业</h4>
+<p>3.下面的函数会输出什么？</p>
+<pre class="r"><code>f &lt;- function(x) {
+    f &lt;- function(x) {
+        f &lt;- function(x) {
+            x ^ 2
+        }
+        f(x) + 1
+    }
+    f(x) * 2
+}
+f(10)</code></pre>
+<pre><code>## [1] 202</code></pre>
+</div>
+<div class="section level4">
+<h4>6.3 每一个操作都是一个函数调用</h4>
+<ul>
+<li>万物皆为对象</li>
+<li>万事皆为函数</li>
+</ul>
+<pre class="r"><code>add &lt;- function(x, y) x + y
+sapply(1:10, add, 3)</code></pre>
+<pre><code>##  [1]  4  5  6  7  8  9 10 11 12 13</code></pre>
+<pre class="r"><code># 等同于
+sapply(1:5, `+`, 3)  # 注意可以使用``引用保留的函数</code></pre>
+<pre><code>## [1] 4 5 6 7 8</code></pre>
+<pre class="r"><code>sapply(1:5, &quot;+&quot;, 3)  # 之所以可以起作用是因为sapply中使用了match.fun来查找函数</code></pre>
+<pre><code>## [1] 4 5 6 7 8</code></pre>
+</div>
+<div class="section level4">
+<h4>6.4 函数参数</h4>
+</div>
+<div class="section level4">
+<h4>6.4.1 函数调用</h4>
+<p>调用函数时，参数可以进行位置匹配，名称完全或不完全匹配，顺序为完全匹配，不完全匹配，位置匹配。</p>
+<pre class="r"><code>f &lt;- function(abcdef, bcde1, bcde2) {
+    list(a = abcdef, b1 = bcde1, b2 = bcde2)
+}
+str(f(1, 2, 3))</code></pre>
+<pre><code>## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3</code></pre>
+<pre class="r"><code>str(f(2, 3, abcdef = 1))</code></pre>
+<pre><code>## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3</code></pre>
+<pre class="r"><code>str(f(2, 3, a = 1))</code></pre>
+<pre><code>## List of 3
+##  $ a : num 1
+##  $ b1: num 2
+##  $ b2: num 3</code></pre>
+<pre class="r"><code># But this doesn't work because abbreviation is ambiguous
+# str(f(1, 3, b = 1))
+#&gt; Error: argument 3 matches multiple formal arguments</code></pre>
+<p>…之后的参数必须指定完整的名字。</p>
+</div>
+<div class="section level4">
+<h4>6.4.2 将参数放入列表进行调用</h4>
+<pre class="r"><code>args &lt;- list(1:10, na.rm = TRUE)
+do.call(mean, list(1:10, na.rm = TRUE))</code></pre>
+<pre><code>## [1] 5.5</code></pre>
+<pre class="r"><code># 等同于
+mean(1:10, na.rm = TRUE)</code></pre>
+<pre><code>## [1] 5.5</code></pre>
+</div>
+<div class="section level4">
+<h4>6.4.3 默认和缺失参数</h4>
+<pre class="r"><code># 默认值
+f &lt;- function(a = 1, b = 2) {
+    c(a, b)
+}
+# 因为惰性求值，可以根据其他参数设置默认值
+g &lt;- function(a = 1, b = a * 2) {
+    c(a, b)
+}
+g()</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+<pre class="r"><code>h &lt;- function(a = 1, b = d) {
+    d &lt;- (a + 1) ^ 2
+    c(a, b)
+}
+h()</code></pre>
+<pre><code>## [1] 1 4</code></pre>
+<pre class="r"><code># 使用missing()检测参数
+i &lt;- function(a, b) {
+    c(missing(a), missing(b))
+}
+i()</code></pre>
+<pre><code>## [1] TRUE TRUE</code></pre>
+<pre class="r"><code>i(a = 1)</code></pre>
+<pre><code>## [1] FALSE  TRUE</code></pre>
+<pre class="r"><code>i(b = 2)</code></pre>
+<pre><code>## [1]  TRUE FALSE</code></pre>
+<pre class="r"><code>i(1, 2)</code></pre>
+<pre><code>## [1] FALSE FALSE</code></pre>
+</div>
+<div class="section level4">
+<h4>6.4.4 惰性求值</h4>
+<p>惰性求值：只有在用到时才会进行计算</p>
+<pre class="r"><code>f &lt;- function(x) {
+    10
+}
+f(stop(&quot;This is an error!&quot;))</code></pre>
+<pre><code>## [1] 10</code></pre>
+<pre class="r"><code># 使用force()强制进行计算
+f &lt;- function(x) {
+    force(x)
+    10
+}
+
+# f(stop(&quot;This is an error!&quot;))
+# Error: This is an error!
+# 使用lapply创建closure时特别有用
+add &lt;- function(x) {
+    force(x)  # 去掉这句最后两句将会返回同样的值
+    function(y) x + y
+}
+adders &lt;- lapply(1:10, add)
+adders[[1]](10)</code></pre>
+<pre><code>## [1] 11</code></pre>
+<pre class="r"><code>adders[[10]](10)</code></pre>
+<pre><code>## [1] 20</code></pre>
+<p>默认值只会在函数内部计算，这将导致下面的代码有所不同，</p>
+<pre class="r"><code>f &lt;- function(x = ls()) {
+    a &lt;- 1
+    x
+}
+# 函数内部计算
+f()</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;x&quot;</code></pre>
+<pre class="r"><code># 在全局环境计算
+f(ls())</code></pre>
+<pre><code>##  [1] &quot;add&quot;            &quot;adders&quot;         &quot;args&quot;           &quot;b&quot;             
+##  [5] &quot;df&quot;             &quot;dfl&quot;            &quot;f&quot;              &quot;f1&quot;            
+##  [9] &quot;f2&quot;             &quot;f3&quot;             &quot;formals_length&quot; &quot;funs&quot;          
+## [13] &quot;g&quot;              &quot;grades&quot;         &quot;h&quot;              &quot;i&quot;             
+## [17] &quot;id&quot;             &quot;info&quot;           &quot;j&quot;              &quot;k&quot;             
+## [21] &quot;l&quot;              &quot;lookup&quot;         &quot;mtcars&quot;         &quot;n&quot;             
+## [25] &quot;o&quot;              &quot;objs&quot;           &quot;select&quot;         &quot;sex_char&quot;      
+## [29] &quot;sex_factor&quot;     &quot;vals&quot;           &quot;x&quot;              &quot;x1&quot;            
+## [33] &quot;x2&quot;             &quot;x3&quot;             &quot;y&quot;              &quot;z&quot;</code></pre>
+<p>一个没有没有计算的参数称为一个诺言(promise)，它由两部分组成，</p>
+<ul>
+<li>一个要进行计算的表达式(expression)</li>
+<li>表达式创建和运行的环境(environment)</li>
+</ul>
+<p>惰性求值在if中有很大的用处，</p>
+<pre class="r"><code># 如果不是惰性求值，x&gt;0将会返回一个logical(0)，对于if这会出错
+x &lt;- NULL
+if (!is.null(x) &amp;&amp; x &gt; 0) {
+}</code></pre>
+</div>
+<div id="section-1" class="section level4">
+<h4>6.4.5 …</h4>
+<pre class="r"><code># 使用list(...)来获得...的值
+f &lt;- function(...) {
+    names(list(...))
+}
+f(a = 1, b = 2)</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;b&quot;</code></pre>
+</div>
+<div id="-8" class="section level4">
+<h4>6.4.6 作业</h4>
+<p>2.函数将返回？为什么？有什么法则？</p>
+<pre class="r"><code>f1 &lt;- function(x = {y &lt;- 1; 2}, y = 0) {
+    x + y
+}
+f1()</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>惰性求值，第一次计算发生在函数体x+y，此时x=2，y起先为0，在计算x的过程中y&lt;-1，所以结果为3</p>
+<p>3.函数将返回？为什么？有什么法则？</p>
+<pre class="r"><code>f2 &lt;- function(x = z) {
+    z &lt;- 100
+    x
+}
+f2()</code></pre>
+<pre><code>## [1] 100</code></pre>
+</div>
+<div id="special-call" class="section level4">
+<h4>6.5 特殊调用(special call)</h4>
+</div>
+<div id="infix-functions" class="section level4">
+<h4>6.5.1 infix functions</h4>
+<p>所有用户自己建立的infix函数名字必须以%为起止，</p>
+<pre class="r"><code># 创建infix函数时，必须以``将函数名包围起来，这只是R语言特殊的语法糖
+`%+%` &lt;- function(a, b) paste(a, b, sep = &quot;&quot;)
+&quot;new&quot; %+% &quot; string&quot;</code></pre>
+<pre><code>## [1] &quot;new string&quot;</code></pre>
+<pre class="r"><code># 等同于
+`%+%`(&quot;new&quot;, &quot; string&quot;)</code></pre>
+<pre><code>## [1] &quot;new string&quot;</code></pre>
+<pre class="r"><code># 当定义的函数名包含特殊字符时，在创建函数要进行转义，调用时不用
+`% %` &lt;- function(a, b) paste(a, b)
+`%'%` &lt;- function(a, b) paste(a, b)
+`%/\\%` &lt;- function(a, b) paste(a, b)
+&quot;a&quot; % % &quot;b&quot;</code></pre>
+<pre><code>## [1] &quot;a b&quot;</code></pre>
+<pre class="r"><code>&quot;a&quot; %'% &quot;b&quot;</code></pre>
+<pre><code>## [1] &quot;a b&quot;</code></pre>
+<pre class="r"><code>&quot;a&quot; %/\% &quot;b&quot;</code></pre>
+<pre><code>## [1] &quot;a b&quot;</code></pre>
+</div>
+<div id="replace-functions" class="section level4">
+<h4>6.5.2 replace functions</h4>
+<p>replace function的名字也很特殊，形式为xxx&lt;-，通常情况下有两个参数x和value，并且必须有value参数，x可以改名。</p>
+<pre class="r"><code>`second&lt;-` &lt;- function(x, value) {
+    x[2] &lt;- value
+    x
+}
+x &lt;- 1:10
+second(x) &lt;- 5L
+x</code></pre>
+<pre><code>##  [1]  1  5  3  4  5  6  7  8  9 10</code></pre>
+<p>从表面上看函数修改了参数x，实际上修改的只是x的一份拷贝，而不是真正的x，这种策略将会对性能产生影响。原始函数可以直接修改参数本身，例如</p>
+<pre class="r"><code>x &lt;- 1:10
+x[2] &lt;- 7L</code></pre>
+</div>
+<div id="-9" class="section level4">
+<h4>6.5.3 作业</h4>
+<p>1.找出base包里的所有replace函数，它们哪些是原始函数？</p>
+<pre class="r"><code>r_index &lt;- grep(&quot;*&lt;-$&quot;, names(funs))
+names(funs)[r_index]</code></pre>
+<pre><code>##  [1] &quot;$&lt;-&quot;            &quot;@&lt;-&quot;            &quot;[[&lt;-&quot;           &quot;[&lt;-&quot;           
+##  [5] &quot;&lt;-&quot;             &quot;&lt;&lt;-&quot;            &quot;attr&lt;-&quot;         &quot;attributes&lt;-&quot;  
+##  [9] &quot;class&lt;-&quot;        &quot;dim&lt;-&quot;          &quot;dimnames&lt;-&quot;     &quot;environment&lt;-&quot; 
+## [13] &quot;length&lt;-&quot;       &quot;levels&lt;-&quot;       &quot;names&lt;-&quot;        &quot;oldClass&lt;-&quot;    
+## [17] &quot;storage.mode&lt;-&quot;</code></pre>
+<pre class="r"><code>sapply(funs[r_index], is.primitive)</code></pre>
+<pre><code>##            $&lt;-            @&lt;-           [[&lt;-            [&lt;-             &lt;- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##            &lt;&lt;-         attr&lt;-   attributes&lt;-        class&lt;-          dim&lt;- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##     dimnames&lt;-  environment&lt;-       length&lt;-       levels&lt;-        names&lt;- 
+##           TRUE           TRUE           TRUE           TRUE           TRUE 
+##     oldClass&lt;- storage.mode&lt;- 
+##           TRUE           TRUE</code></pre>
+<p>3.创建一个xor的infix函数</p>
+<pre class="r"><code>`%xor%` &lt;- function(x, y) {
+    xor(x, y)
+}
+
+T %xor% F</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>5.创建一个replace函数随机修改向量的某个位置</p>
+<pre class="r"><code>`rr&lt;-` &lt;- function(y, value) {
+    y[sample(1:length(y), 1)] &lt;- value
+    y
+}
+x &lt;- 1:10
+rr(x) &lt;- 5
+x</code></pre>
+<pre><code>##  [1]  1  2  5  4  5  6  7  8  9 10</code></pre>
+</div>
+<div class="section level4">
+<h4>6.6 返回值</h4>
+<p>可以使用return返回，没有return默认将函数最后一句的值返回，提早返回时最好使用明确的return函数，可以使函数更清晰。</p>
+<pre class="r"><code>f &lt;- function(x, y) {
+    if (!x) return(y)
+    # complicated processing here
+}</code></pre>
+<blockquote>
+<p>纯函数的概念纯函数不会对工作空间产生影响，没有副作用，同样的输入产生同样的输出。</p>
+</blockquote>
+<pre class="r"><code>f &lt;- function(x) {
+    x$a &lt;- 2
+    x
+}
+x &lt;- list(a = 1)
+f(x)</code></pre>
+<pre><code>## $a
+## [1] 2</code></pre>
+<pre class="r"><code>x</code></pre>
+<pre><code>## $a
+## [1] 1</code></pre>
+<p>这得益于copy-on-modify规则，但是environment和reference class已经修改了。</p>
+<p>大部分的R函数都是纯函数，除了下面</p>
+<ul>
+<li>library()</li>
+<li>setwd(), Sys.setenv(), Sys.setlocale()</li>
+<li>plot()</li>
+<li>write(), write.csv(), saveRDS()</li>
+<li>options(), pars()</li>
+<li>S4</li>
+<li>随机数发生器</li>
+</ul>
+<p>可以使用invisible隐藏函数的返回值，使用()强制打印函数的返回值</p>
+<pre class="r"><code>f1 &lt;- function() 1
+f2 &lt;- function() invisible(1)
+f1()</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>f2()
+f1() == 1</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>f2() == 1</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>(f2())</code></pre>
+<pre><code>## [1] 1</code></pre>
+</div>
+<div id="on.exit" class="section level4">
+<h4>6.6.1 on.exit</h4>
+<p>通常情况下，当你想在函数返回后做一些工作可以使用on.exit，比如对全局变量的恢复等。</p>
+<pre class="r"><code>in_dir &lt;- function(dir, code) {
+    old &lt;- setwd(dir)
+    on.exit(setwd(old))
+    force(code)
+}
+getwd()</code></pre>
+<pre><code>## [1] &quot;F:/notes/reading/Advanced R&quot;</code></pre>
+<pre class="r"><code>in_dir(&quot;~&quot;, getwd())</code></pre>
+<pre><code>## [1] &quot;C:/Users/ASUS/Documents&quot;</code></pre>
+<p>注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。</p>
+</div>
+<div id="-10" class="section level4">
+<h4>6.6.2 作业</h4>
+<p>2.library()没有做什么，怎样保存和恢复options和par？</p>
+<pre class="r"><code># op &lt;- options(tag=value)
+# some operations
+# options(op)
+# par和options类似</code></pre>
+<p>3.打开一个图形设备，运行一些代码，然后关闭它。</p>
+<pre class="r"><code>devtest &lt;- function(code) {
+    dev.new()
+    x &lt;- 1
+    on.exit(code)
+    x
+}
+devtest(dev.off())</code></pre>
+<pre><code>## [1] 1</code></pre>
 </div>
 </div>
 
