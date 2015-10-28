@@ -1060,6 +1060,135 @@ devtest(dev.off())</code></pre>
 <pre><code>## [1] 1</code></pre>
 </div>
 </div>
+<div class="section level3">
+<h3>7.面向对象编程</h3>
+<p>R语言有三种面向对象系统，</p>
+<ul>
+<li>S3，方法属于函数，有一个generic function，没有类的正式定义方法</li>
+<li>S4，与S3类似，但是有两点不同，S4有类的正式定义方法，可以有多个分发器(dispatch)</li>
+<li>RC，与前两者不同，方法属于类，另外RC没有采用R的copy-on-modify方法，而是直接修改原对象，这一点可以解决前两个无法解决的一些难题</li>
+</ul>
+<div id="base-type" class="section level4">
+<h4>7.1 基本类型(base type)</h4>
+<p>基本类型不是一个真正的面向对象系统，因为只有R核心组才能创建新的类型，可以使用typeof()函数判断一个基本类型，</p>
+<pre class="r"><code># The type of a function is &quot;closure&quot;
+f &lt;- function() {}
+typeof(f)</code></pre>
+<pre><code>## [1] &quot;closure&quot;</code></pre>
+<pre class="r"><code>is.function(f)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># The type of a primitive function is &quot;builtin&quot;
+typeof(sum)</code></pre>
+<pre><code>## [1] &quot;builtin&quot;</code></pre>
+<pre class="r"><code>is.primitive(sum)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>还有一个mode()和storage.mode()函数最好不要使用，它们只是为了与S语言进行兼容而存在，实际上只是指向typeof函数的一个链接。</p>
+<p>使用is.object(x)是否返回FALSE来测试一个对象是否是基本类型</p>
+</div>
+<div id="s3-1" class="section level4">
+<h4>7.2 S3</h4>
+<p>base和stat包里唯一采用的面向对象系统，</p>
+<p>没有直接的方法可以判断S3，最接近的一个方法是is.object(x) &amp; !isS4(x)</p>
+<p>在S3中方法属于函数，称为通用函数(generic function)，通用函数源代码通常为UseMethod(xxx)，一些S3对象没有使用UseMethod，比如[, sum(), 和 cbind()，原因是它们是由C代码实现的。</p>
+<p>S3方法的形式为generic.class()，例如mean.Data()、print.factor()</p>
+<pre class="r"><code># 获得属于通用函数的所有方法
+methods(&quot;mean&quot;)</code></pre>
+<pre><code>## [1] mean.Date     mean.default  mean.difftime mean.POSIXct  mean.POSIXlt 
+## see '?methods' for accessing help and source code</code></pre>
+<pre class="r"><code># 获得所有包含某个class的所有通用函数
+methods(class = &quot;ts&quot;)</code></pre>
+<pre><code>##  [1] [             [&lt;-           aggregate     as.data.frame cbind        
+##  [6] coerce        cycle         diff          diffinv       initialize   
+## [11] kernapply     lines         Math          Math2         monthplot    
+## [16] na.omit       Ops           plot          print         show         
+## [21] slotsFromS3   t             time          window        window&lt;-     
+## see '?methods' for accessing help and source code</code></pre>
+</div>
+<div class="section level4">
+<h4>7.2.2 定义类、创建对象</h4>
+<p>定义类有两种方法，一步就位或者分步执行，</p>
+<pre class="r"><code># Create and assign class in one step
+foo &lt;- structure(list(), class = &quot;foo&quot;)
+# Create, then set class
+foo &lt;- list()
+class(foo) &lt;- &quot;foo&quot;</code></pre>
+<p>通常情况下，S3类都是在list或者vector基础上建立的</p>
+<p>通常情况下，S3的构造函数形式为，且构造函数的名字和class相同</p>
+<pre class="r"><code>foo &lt;- function(x) {
+    if (!is.numeric(x)) stop(&quot;X must be numeric&quot;)
+    structure(list(x), class = &quot;foo&quot;)
+}</code></pre>
+<p>S3不会检测对象类别的正确性，要注意不要把枪对着自己</p>
+</div>
+<div class="section level4">
+<h4>7.2.3 创建新的方法和通用函数</h4>
+<pre class="r"><code># generic function f
+f &lt;- function(x) UseMethod(&quot;f&quot;)
+# method
+f.a &lt;- function(x) &quot;Class a&quot;
+
+a &lt;- structure(list(), class = &quot;a&quot;)
+class(a)</code></pre>
+<pre><code>## [1] &quot;a&quot;</code></pre>
+<pre class="r"><code>f(a)</code></pre>
+<pre><code>## [1] &quot;Class a&quot;</code></pre>
+<pre class="r"><code># 还可以为现有的generic function添加方法
+mean.a &lt;- function(x) &quot;a&quot;
+mean(a)</code></pre>
+<pre><code>## [1] &quot;a&quot;</code></pre>
+<pre class="r"><code># default class类似于if中的else子句
+f.default &lt;- function(x) &quot;Unknown class&quot;</code></pre>
+</div>
+<div id="-11" class="section level4">
+<h4>7.2.5 作业</h4>
+<p>1.阅读t()和t.test()的源码确认它们是generic function，如果你创建一个test的类，用t调用它会怎么样？</p>
+<pre class="r"><code>tt &lt;- structure(list(1,2,3), class = &quot;test&quot;)
+t.test &lt;- function(x, y) &quot;test&quot;
+t(tt)</code></pre>
+<pre><code>## [1] &quot;test&quot;</code></pre>
+<p>2.base包中哪些类拥有属于Math通用函数的方法？How do the methods work？</p>
+<pre class="r"><code># 不太确定对不对
+methods(&quot;Math&quot;)</code></pre>
+<pre><code>## [1] Math,nonStructure-method Math,structure-method   
+## [3] Math.data.frame          Math.Date               
+## [5] Math.difftime            Math.factor             
+## [7] Math.POSIXt             
+## see '?methods' for accessing help and source code</code></pre>
+<p>3.R中有两个日期类，POSIXct和POSIXlt, 都是继承自POSIXt，对于这两个日期类，哪些通用函数表现不同，哪些函数相同？</p>
+<p>4.哪个base generic拥有最多的方法？</p>
+<p>5.预测下面代码的输出</p>
+<pre class="r"><code>y &lt;- 1
+g &lt;- function(x) {
+    y &lt;- 2
+    UseMethod(&quot;g&quot;)
+}
+g.numeric &lt;- function(x) y
+g(10)</code></pre>
+<pre><code>## [1] 2</code></pre>
+<pre class="r"><code>h &lt;- function(x) {
+    x &lt;- 10
+    UseMethod(&quot;h&quot;)
+}
+h.character &lt;- function(x) paste(&quot;char&quot;, x)
+h.numeric &lt;- function(x) paste(&quot;num&quot;, x)
+h(&quot;a&quot;)</code></pre>
+<pre><code>## [1] &quot;char a&quot;</code></pre>
+<p>执行顺序为，generic function然后是具体的methods</p>
+<p>6.Internal generics don’t dispatch on the implicit class of base types.仔细阅读?“internal generic”解释为什么f和g的length不同。What function helps distinguish between the behaviour of f and g?</p>
+<pre class="r"><code>f &lt;- function() 1
+g &lt;- function() 2
+class(g) &lt;- &quot;function&quot;
+class(f)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<pre class="r"><code>class(g)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<pre class="r"><code>length.function &lt;- function(x) &quot;function&quot;
+length(f)</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>length(g)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+</div>
+</div>
 
 
 </div>

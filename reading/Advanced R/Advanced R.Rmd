@@ -1095,6 +1095,154 @@ devtest(dev.off())
 
 ```
 
+### 7.面向对象编程
+
+R语言有三种面向对象系统，
+
+- S3，方法属于函数，有一个generic function，没有类的正式定义方法
+- S4，与S3类似，但是有两点不同，S4有类的正式定义方法，可以有多个分发器(dispatch)
+- RC，与前两者不同，方法属于类，另外RC没有采用R的copy-on-modify方法，而是直接修改原对象，这一点可以解决前两个无法解决的一些难题
+
+#### 7.1 基本类型(base type)
+
+基本类型不是一个真正的面向对象系统，因为只有R核心组才能创建新的类型，可以使用typeof()函数判断一个基本类型，
+
+```{r}
+# The type of a function is "closure"
+f <- function() {}
+typeof(f)
+is.function(f)
+# The type of a primitive function is "builtin"
+typeof(sum)
+is.primitive(sum)
+```
+
+还有一个mode()和storage.mode()函数最好不要使用，它们只是为了与S语言进行兼容而存在，实际上只是指向typeof函数的一个链接。
+
+使用is.object(x)是否返回FALSE来测试一个对象是否是基本类型
+
+#### 7.2 S3
+
+base和stat包里唯一采用的面向对象系统，
+
+没有直接的方法可以判断S3，最接近的一个方法是is.object(x) & !isS4(x)
+
+在S3中方法属于函数，称为通用函数(generic function)，通用函数源代码通常为UseMethod(xxx)，一些S3对象没有使用UseMethod，比如[, sum(), 和 cbind()，原因是它们是由C代码实现的。
+
+S3方法的形式为generic.class()，例如mean.Data()、print.factor()
+
+```{r}
+# 获得属于通用函数的所有方法
+methods("mean")
+# 获得所有包含某个class的所有通用函数
+methods(class = "ts")
+```
+
+#### 7.2.2 定义类、创建对象
+
+定义类有两种方法，一步就位或者分步执行，
+
+```{r}
+# Create and assign class in one step
+foo <- structure(list(), class = "foo")
+# Create, then set class
+foo <- list()
+class(foo) <- "foo"
+
+```
+
+通常情况下，S3类都是在list或者vector基础上建立的
+
+通常情况下，S3的构造函数形式为，且构造函数的名字和class相同
+
+```{r}
+foo <- function(x) {
+    if (!is.numeric(x)) stop("X must be numeric")
+    structure(list(x), class = "foo")
+}
+
+```
+
+S3不会检测对象类别的正确性，要注意不要把枪对着自己
+
+#### 7.2.3 创建新的方法和通用函数
+
+```{r}
+# generic function f
+f <- function(x) UseMethod("f")
+# method
+f.a <- function(x) "Class a"
+
+a <- structure(list(), class = "a")
+class(a)
+
+f(a)
+# 还可以为现有的generic function添加方法
+mean.a <- function(x) "a"
+mean(a)
+# default class类似于if中的else子句
+f.default <- function(x) "Unknown class"
+```
+
+#### 7.2.5 作业
+
+1.阅读t()和t.test()的源码确认它们是generic function，如果你创建一个test的类，用t调用它会怎么样？
+
+```{r}
+tt <- structure(list(1,2,3), class = "test")
+t.test <- function(x, y) "test"
+t(tt)
+
+```
+
+2.base包中哪些类拥有属于Math通用函数的方法？How do the methods work？
+
+```{r}
+# 不太确定对不对
+methods("Math")
+
+```
+
+3.R中有两个日期类，POSIXct和POSIXlt, 都是继承自POSIXt，对于这两个日期类，哪些通用函数表现不同，哪些函数相同？
+
+4.哪个base generic拥有最多的方法？
+
+5.预测下面代码的输出
+
+```{r}
+y <- 1
+g <- function(x) {
+    y <- 2
+    UseMethod("g")
+}
+g.numeric <- function(x) y
+g(10)
+h <- function(x) {
+    x <- 10
+    UseMethod("h")
+}
+h.character <- function(x) paste("char", x)
+h.numeric <- function(x) paste("num", x)
+h("a")
+
+```
+
+执行顺序为，generic function然后是具体的methods
+
+6.Internal generics don’t dispatch on the implicit class of base types.仔细阅读?"internal generic"解释为什么f和g的length不同。What function helps distinguish between the behaviour of f and g?
+
+```{r}
+f <- function() 1
+g <- function() 2
+class(g) <- "function"
+class(f)
+class(g)
+length.function <- function(x) "function"
+length(f)
+length(g)
+
+```
+
 
 
 
