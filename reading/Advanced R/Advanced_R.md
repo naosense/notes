@@ -762,9 +762,9 @@ vals[c(4, 15)]
 
 ```r
 select <- matrix(ncol = 2, byrow = TRUE, c(
-1, 1,
-3, 1,
-2, 4
+    1, 1,
+    3, 1,
+    2, 4
 ))
 vals[select]
 ```
@@ -966,9 +966,9 @@ lookup[x]
 ```r
 grades <- c(1, 2, 2, 3, 1)
 info <- data.frame(
-grade = 3:1,
-desc = c("Excellent", "Good", "Poor"),
-fail = c(F, F, T)
+    grade = 3:1,
+    desc = c("Excellent", "Good", "Poor"),
+    fail = c(F, F, T)
 )
 
 # 第一种方法Using match
@@ -1152,8 +1152,8 @@ lexical scoping意思是去函数创建的地方去寻找它而不是调用它�
 ```r
 x <- 2
 g <- function() {
-y <- 1
-c(x, y)
+    y <- 1
+    c(x, y)
 }
 g()
 ```
@@ -1166,10 +1166,10 @@ g()
 
 ```r
 j <- function(x) {
-y <- 2
-function() {
-c(x, y)
-}
+    y <- 2
+    function() {
+        c(x, y)
+    }
 }
 k <- j(1)
 k()
@@ -1185,8 +1185,8 @@ k()
 ```r
 n <- function(x) x / 2
 o <- function() {
-n <- 10
-n(n)
+    n <- 10
+    n(n)
 }
 o()
 ```
@@ -1200,12 +1200,12 @@ o()
 
 ```r
 j <- function() {
-if (!exists("a")) {
-a <- 1
-} else {
-a <- a + 1
-}
-print(a)
+    if (!exists("a")) {
+        a <- 1
+    } else {
+        a <- a + 1
+    }
+    print(a)
 }
 ```
 
@@ -1369,11 +1369,11 @@ mean(1:10, na.rm = TRUE)
 ```r
 # 默认值
 f <- function(a = 1, b = 2) {
-c(a, b)
+    c(a, b)
 }
 # 因为惰性求值，可以根据其他参数设置默认值
 g <- function(a = 1, b = a * 2) {
-c(a, b)
+    c(a, b)
 }
 g()
 ```
@@ -1384,8 +1384,8 @@ g()
 
 ```r
 h <- function(a = 1, b = d) {
-d <- (a + 1) ^ 2
-c(a, b)
+    d <- (a + 1) ^ 2
+    c(a, b)
 }
 h()
 ```
@@ -1398,7 +1398,7 @@ h()
 ```r
 # 使用missing()检测参数
 i <- function(a, b) {
-c(missing(a), missing(b))
+    c(missing(a), missing(b))
 }
 i()
 ```
@@ -1438,7 +1438,7 @@ i(1, 2)
 
 ```r
 f <- function(x) {
-10
+    10
 }
 f(stop("This is an error!"))
 ```
@@ -1450,8 +1450,8 @@ f(stop("This is an error!"))
 ```r
 # 使用force()强制进行计算
 f <- function(x) {
-force(x)
-10
+    force(x)
+    10
 }
 
 # f(stop("This is an error!"))
@@ -1482,8 +1482,8 @@ adders[[10]](10)
 
 ```r
 f <- function(x = ls()) {
-a <- 1
-x
+    a <- 1
+    x
 }
 # 函数内部计算
 f()
@@ -1531,7 +1531,7 @@ if (!is.null(x) && x > 0) {
 ```r
 # 使用list(...)来获得...的值
 f <- function(...) {
-names(list(...))
+    names(list(...))
 }
 f(a = 1, b = 2)
 ```
@@ -1547,7 +1547,7 @@ f(a = 1, b = 2)
 
 ```r
 f1 <- function(x = {y <- 1; 2}, y = 0) {
-x + y
+    x + y
 }
 f1()
 ```
@@ -1563,8 +1563,8 @@ f1()
 
 ```r
 f2 <- function(x = z) {
-z <- 100
-x
+    z <- 100
+    x
 }
 f2()
 ```
@@ -1634,8 +1634,8 @@ replace function的名字也很特殊，形式为xxx<-，通常情况下有两�
 
 ```r
 `second<-` <- function(x, value) {
-x[2] <- value
-x
+    x[2] <- value
+    x
 }
 x <- 1:10
 second(x) <- 5L
@@ -1716,7 +1716,7 @@ x
 ```
 
 ```
-##  [1]  1  2  3  4  5  6  7  8  9 10
+##  [1]  1  2  3  4  5  6  7  8  5 10
 ```
 
 #### 6.6 返回值
@@ -1727,7 +1727,7 @@ x
 ```r
 f <- function(x, y) {
     if (!x) return(y)
-# complicated processing here
+    # complicated processing here
 }
 ```
 
@@ -1737,8 +1737,8 @@ f <- function(x, y) {
 
 ```r
 f <- function(x) {
-x$a <- 2
-x
+    x$a <- 2
+    x
 }
 x <- list(a = 1)
 f(x)
@@ -1834,13 +1834,13 @@ in_dir("~", getwd())
 ## [1] "C:/Users/ASUS/Documents"
 ```
 
- 注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。
- 
- #### 6.6.2 作业
- 
- 2.library()没有做什么，怎样保存和恢复options和par？
- 
- 
+注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。
+
+#### 6.6.2 作业
+
+2.library()没有做什么，怎样保存和恢复options和par？
+
+
 
 ```r
 # op <- options(tag=value)
@@ -1858,10 +1858,7 @@ devtest <- function(code) {
     x <- 1
     on.exit(code)
     x
-   
-    
 }
-
 devtest(dev.off())
 ```
 
@@ -1869,31 +1866,542 @@ devtest(dev.off())
 ## [1] 1
 ```
 
+### 7.面向对象编程
+
+R语言有三种面向对象系统，
+
+- S3，方法属于函数，有一个generic function，没有类的正式定义方法
+- S4，与S3类似，但是有两点不同，S4有类的正式定义方法，可以有多个分发器(dispatch)
+- RC，与前两者不同，方法属于类，另外RC没有采用R的copy-on-modify方法，而是直接修改原对象，这一点可以解决前两个无法解决的一些难题
+
+#### 7.1 基本类型(base type)
+
+基本类型不是一个真正的面向对象系统，因为只有R核心组才能创建新的类型，可以使用typeof()函数判断一个基本类型，
 
 
+```r
+# The type of a function is "closure"
+f <- function() {}
+typeof(f)
+```
+
+```
+## [1] "closure"
+```
+
+```r
+is.function(f)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+# The type of a primitive function is "builtin"
+typeof(sum)
+```
+
+```
+## [1] "builtin"
+```
+
+```r
+is.primitive(sum)
+```
+
+```
+## [1] TRUE
+```
+
+还有一个mode()和storage.mode()函数最好不要使用，它们只是为了与S语言进行兼容而存在，实际上只是指向typeof函数的一个链接。
+
+使用is.object(x)是否返回FALSE来测试一个对象是否是基本类型
+
+#### 7.2 S3
+
+base和stat包里唯一采用的面向对象系统，
+
+没有直接的方法可以判断S3，最接近的一个方法是is.object(x) & !isS4(x)
+
+在S3中方法属于函数，称为通用函数(generic function)，通用函数源代码通常为UseMethod(xxx)，一些S3对象没有使用UseMethod，比如[, sum(), 和 cbind()，原因是它们是由C代码实现的。
+
+S3方法的形式为generic.class()，例如mean.Data()、print.factor()
 
 
+```r
+# 获得属于通用函数的所有方法
+methods("mean")
+```
+
+```
+## [1] mean.Date     mean.default  mean.difftime mean.POSIXct  mean.POSIXlt 
+## see '?methods' for accessing help and source code
+```
+
+```r
+# 获得所有包含某个class的所有通用函数
+methods(class = "ts")
+```
+
+```
+##  [1] [             [<-           aggregate     as.data.frame cbind        
+##  [6] coerce        cycle         diff          diffinv       initialize   
+## [11] kernapply     lines         Math          Math2         monthplot    
+## [16] na.omit       Ops           plot          print         show         
+## [21] slotsFromS3   t             time          window        window<-     
+## see '?methods' for accessing help and source code
+```
+
+#### 7.2.2 定义类、创建对象
+
+定义类有两种方法，一步就位或者分步执行，
 
 
+```r
+# Create and assign class in one step
+foo <- structure(list(), class = "foo")
+# Create, then set class
+foo <- list()
+class(foo) <- "foo"
+```
+
+通常情况下，S3类都是在list或者vector基础上建立的
+
+通常情况下，S3的构造函数形式为，且构造函数的名字和class相同
 
 
+```r
+foo <- function(x) {
+    if (!is.numeric(x)) stop("X must be numeric")
+    structure(list(x), class = "foo")
+}
+```
+
+S3不会检测对象类别的正确性，要注意不要把枪对着自己
+
+#### 7.2.3 创建新的方法和通用函数
 
 
+```r
+# generic function f
+f <- function(x) UseMethod("f")
+# method
+f.a <- function(x) "Class a"
+
+a <- structure(list(), class = "a")
+class(a)
+```
+
+```
+## [1] "a"
+```
+
+```r
+f(a)
+```
+
+```
+## [1] "Class a"
+```
+
+```r
+# 还可以为现有的generic function添加方法
+mean.a <- function(x) "a"
+mean(a)
+```
+
+```
+## [1] "a"
+```
+
+```r
+# default class类似于if中的else子句
+f.default <- function(x) "Unknown class"
+```
+
+#### 7.2.5 作业
+
+1.阅读t()和t.test()的源码确认它们是generic function，如果你创建一个test的类，用t调用它会怎么样？
 
 
+```r
+tt <- structure(list(1,2,3), class = "test")
+t.test <- function(x, y) "test"
+t(tt)
+```
+
+```
+## [1] "test"
+```
+
+2.base包中哪些类拥有属于Math通用函数的方法？How do the methods work？
 
 
+```r
+# 不太确定对不对
+methods("Math")
+```
+
+```
+## [1] Math,nonStructure-method Math,structure-method   
+## [3] Math.data.frame          Math.Date               
+## [5] Math.difftime            Math.factor             
+## [7] Math.POSIXt             
+## see '?methods' for accessing help and source code
+```
+
+3.R中有两个日期类，POSIXct和POSIXlt, 都是继承自POSIXt，对于这两个日期类，哪些通用函数表现不同，哪些函数相同？
+
+4.哪个base generic拥有最多的方法？
+
+5.预测下面代码的输出
 
 
+```r
+y <- 1
+g <- function(x) {
+    y <- 2
+    UseMethod("g")
+}
+g.numeric <- function(x) y
+g(10)
+```
+
+```
+## [1] 2
+```
+
+```r
+h <- function(x) {
+    x <- 10
+    UseMethod("h")
+}
+h.character <- function(x) paste("char", x)
+h.numeric <- function(x) paste("num", x)
+h("a")
+```
+
+```
+## [1] "char a"
+```
+
+执行顺序为，generic function然后是具体的methods
+
+6.Internal generics don’t dispatch on the implicit class of base types.仔细阅读?"internal generic"解释为什么f和g的length不同。What function helps distinguish between the behaviour of f and g?
 
 
+```r
+f <- function() 1
+g <- function() 2
+class(g) <- "function"
+class(f)
+```
+
+```
+## [1] "function"
+```
+
+```r
+class(g)
+```
+
+```
+## [1] "function"
+```
+
+```r
+length.function <- function(x) "function"
+length(f)
+```
+
+```
+## [1] 1
+```
+
+```r
+length(g)
+```
+
+```
+## [1] "function"
+```
+
+is.object()
+
+#### 7.3 S4
+
+S4和S3类似，方法仍然属于函数，但是有以下几点不同，
+
+- 类有正式的定义方法
+- 通用函数可以根据多个参数分配方法，而不仅仅一个
+- @操作符
+
+- isS4()来判断一个对象是否是s4
+- is()，一个参数列出所有继承的类，两个参数类似inherit()
+- getGenerics()获得所有的s4通用函数，getClasses()获得所有的s4类，showMethods()列出所有的s4方法
+
+#### 7.3.2 定义类、创建对象
+
+s4有三个重要的属性，
+
+- name，根据惯例，s4的类使用驼峰命名法
+- field(slots)
+- contains,一个字符串表示的类名
 
 
+```r
+# 比s3要严格和正式，s4定义必须要使用setClass方法，创建对象使用new
+setClass("Person",
+         slots = list(name = "character", age = "numeric"))
+setClass("Employee",
+         slots = list(boss = "Person"),
+         contains = "Person")
+alice <- new("Person", name = "Alice", age = 40)
+john <- new("Employee", name = "John", age = 20, boss = alice)
+# 访问s4的属性使用@或slot()
+alice@age
+```
+
+```
+## [1] 40
+```
+
+```r
+slot(john, "boss")
+```
+
+```
+## An object of class "Person"
+## Slot "name":
+## [1] "Alice"
+## 
+## Slot "age":
+## [1] 40
+```
+
+```r
+john@boss
+```
+
+```
+## An object of class "Person"
+## Slot "name":
+## [1] "Alice"
+## 
+## Slot "age":
+## [1] 40
+```
+
+@相当于$，slot()相当于[[
+
+#### 7.3 创建generic和methods
 
 
+```r
+# setGeneric()创建一个新的generic或者将已经存在的函数转换为generic
+setGeneric("union")
+```
+
+```
+## [1] "union"
+```
+
+```r
+# setMethods()用来创建方法
+setMethod("union",
+          c(x = "data.frame", y = "data.frame"),
+function(x, y) {
+    unique(rbind(x, y))
+}
+)
+```
+
+```
+## [1] "union"
+```
+
+```r
+# 如果你重新创建了一个generic，需要调用standardGeneric()，与s3的UseMethod()类似
+setGeneric("myGeneric", function(x) {
+    standardGeneric("myGeneric")
+})
+```
+
+```
+## [1] "myGeneric"
+```
+
+#### 7.3.5 作业
+
+1.哪个S4 generic function拥有最多的方法？哪个S4类拥有最多的方法？
+
+2.如果你创建了一个S4的类没有包含(contain)一个已存在的类会发生什么？
+
+3.将一个S4传给一个S3或者反之，将会出现什么情况？
+
+#### 7.4 RC
+
+RC和前面两个系统有两点重要不同，
+
+- 方法属于对象，不属于函数
+- RC对象是易变的，不适用copy-on-modify原则
+
+> Reference classes are implemented using R code: they are a special S4 class
+that wraps around an environment.
+
+RC是特殊的S4类
+
+#### 7.4.1 创建对象
+
+RC最适合有状态的对象，比如银行账户，
 
 
+```r
+Account <- setRefClass("Account")
+Account$new()
+```
+
+```
+## Reference class object of class "Account"
+```
+
+```r
+Account <- setRefClass("Account",
+                       fields = list(balance = "numeric"))
+a <- Account$new(balance = 100)
+# 使用$设置获取变量的值
+a$balance
+```
+
+```
+## [1] 100
+```
+
+```r
+a$balance <- 200
+a$balance
+```
+
+```
+## [1] 200
+```
+
+```r
+# RC没有使用copy-on-modify
+b <- a
+b$balance
+```
+
+```
+## [1] 200
+```
+
+```r
+a$balance <- 0
+b$balance
+```
+
+```
+## [1] 0
+```
+
+```r
+# 正是这个原因，才有一个copy()函数
+c <- a$copy()
+c$balance
+```
+
+```
+## [1] 0
+```
+
+```r
+a$balance <- 100
+c$balance
+```
+
+```
+## [1] 0
+```
+
+```r
+# 注意<<-
+Account <- setRefClass("Account",
+                       fields = list(balance = "numeric"),
+                       methods = list(
+                           withdraw = function(x) {
+                               balance <<- balance - x
+                           },
+                           deposit = function(x) {
+                               balance <<- balance + x
+                           }
+                       )
+)
+
+a <- Account$new(balance = 100)
+a$deposit(100)
+a$balance
+```
+
+```
+## [1] 200
+```
+
+```r
+# 继承
+NoOverdraft <- setRefClass("NoOverdraft",
+                           contains = "Account",
+                           methods = list(
+                               withdraw = function(x) {
+                                   if (balance < x) stop("Not enough money")
+                                   balance <<- balance - x
+                               }
+                           )
+)
+# accountJohn <- NoOverdraft$new(balance = 100)
+# accountJohn$deposit(50)
+# accountJohn$balance
+# accountJohn$withdraw(200)
+```
+
+RC类的一些函数，
+
+- copy()
+- callSuper()，调用父类
+- field()获得属性值
+- export()类似as()
+- show()
+
+详细参考setRefClass()函数
+
+使用is(x, "refClass")判断一个对象是否RC
+
+#### 7.4.3 方法分配
+
+与前两个面向对象系统不同，RC方法分配和主流语言类似，调用形式为x$f，R会在x类中寻找f方法，如果没有找到则会在x的父类中寻找，如果找不到则会在父类的父类中寻找……
+
+#### 7.4.4 作业
+
+1.
+
+2.我说过base包里没有RC类，那是一个简化。使用getClasses()看看哪个类别继承了envRefClass，这些类是干嘛的？
 
 
+```r
+cls <- getClasses(where = parent.env(environment()), inherits = T)
+ref <- Filter(function(x) extends(x, "envRefClass"), cls)
+ref
+```
+
+```
+## [1] "envRefClass"      "localRefClass"    "refGeneratorSlot"
+```
+
+#### 7.5该使用哪个类？
+
+- 大部分情况下，S3足够了，而且能用最少的代码实现相应功能
+- 对于一些复杂的系统，典型的如Matrix包，S4是一个不错的选择
+- RC尽量不用，它会修改原来的对象，这会产生副作用，除非你真想先这样做
 
 

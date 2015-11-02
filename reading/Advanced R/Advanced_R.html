@@ -981,7 +981,7 @@ T %xor% F</code></pre>
 x &lt;- 1:10
 rr(x) &lt;- 5
 x</code></pre>
-<pre><code>##  [1]  1  2  5  4  5  6  7  8  9 10</code></pre>
+<pre><code>##  [1]  1  2  3  4  5  6  7  8  5 10</code></pre>
 </div>
 <div class="section level4">
 <h4>6.6 返回值</h4>
@@ -1187,6 +1187,185 @@ length(f)</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code>length(g)</code></pre>
 <pre><code>## [1] &quot;function&quot;</code></pre>
+<p>is.object()</p>
+</div>
+<div id="s4-1" class="section level4">
+<h4>7.3 S4</h4>
+<p>S4和S3类似，方法仍然属于函数，但是有以下几点不同，</p>
+<ul>
+<li>类有正式的定义方法</li>
+<li>通用函数可以根据多个参数分配方法，而不仅仅一个</li>
+<li><p><span class="citation">@操作符</span></p></li>
+<li>isS4()来判断一个对象是否是s4</li>
+<li>is()，一个参数列出所有继承的类，两个参数类似inherit()</li>
+<li><p>getGenerics()获得所有的s4通用函数，getClasses()获得所有的s4类，showMethods()列出所有的s4方法</p></li>
+</ul>
+</div>
+<div id="-1" class="section level4">
+<h4>7.3.2 定义类、创建对象</h4>
+<p>s4有三个重要的属性，</p>
+<ul>
+<li>name，根据惯例，s4的类使用驼峰命名法</li>
+<li>field(slots)</li>
+<li>contains,一个字符串表示的类名</li>
+</ul>
+<pre class="r"><code># 比s3要严格和正式，s4定义必须要使用setClass方法，创建对象使用new
+setClass(&quot;Person&quot;,
+         slots = list(name = &quot;character&quot;, age = &quot;numeric&quot;))
+setClass(&quot;Employee&quot;,
+         slots = list(boss = &quot;Person&quot;),
+         contains = &quot;Person&quot;)
+alice &lt;- new(&quot;Person&quot;, name = &quot;Alice&quot;, age = 40)
+john &lt;- new(&quot;Employee&quot;, name = &quot;John&quot;, age = 20, boss = alice)
+# 访问s4的属性使用@或slot()
+alice@age</code></pre>
+<pre><code>## [1] 40</code></pre>
+<pre class="r"><code>slot(john, &quot;boss&quot;)</code></pre>
+<pre><code>## An object of class &quot;Person&quot;
+## Slot &quot;name&quot;:
+## [1] &quot;Alice&quot;
+## 
+## Slot &quot;age&quot;:
+## [1] 40</code></pre>
+<pre class="r"><code>john@boss</code></pre>
+<pre><code>## An object of class &quot;Person&quot;
+## Slot &quot;name&quot;:
+## [1] &quot;Alice&quot;
+## 
+## Slot &quot;age&quot;:
+## [1] 40</code></pre>
+<p><span class="citation">@相当于</span>$，slot()相当于[[</p>
+</div>
+<div id="genericmethods" class="section level4">
+<h4>7.3 创建generic和methods</h4>
+<pre class="r"><code># setGeneric()创建一个新的generic或者将已经存在的函数转换为generic
+setGeneric(&quot;union&quot;)</code></pre>
+<pre><code>## [1] &quot;union&quot;</code></pre>
+<pre class="r"><code># setMethods()用来创建方法
+setMethod(&quot;union&quot;,
+          c(x = &quot;data.frame&quot;, y = &quot;data.frame&quot;),
+function(x, y) {
+    unique(rbind(x, y))
+}
+)</code></pre>
+<pre><code>## [1] &quot;union&quot;</code></pre>
+<pre class="r"><code># 如果你重新创建了一个generic，需要调用standardGeneric()，与s3的UseMethod()类似
+setGeneric(&quot;myGeneric&quot;, function(x) {
+    standardGeneric(&quot;myGeneric&quot;)
+})</code></pre>
+<pre><code>## [1] &quot;myGeneric&quot;</code></pre>
+</div>
+<div id="-12" class="section level4">
+<h4>7.3.5 作业</h4>
+<p>1.哪个S4 generic function拥有最多的方法？哪个S4类拥有最多的方法？</p>
+<p>2.如果你创建了一个S4的类没有包含(contain)一个已存在的类会发生什么？</p>
+<p>3.将一个S4传给一个S3或者反之，将会出现什么情况？</p>
+</div>
+<div id="rc" class="section level4">
+<h4>7.4 RC</h4>
+<p>RC和前面两个系统有两点重要不同，</p>
+<ul>
+<li>方法属于对象，不属于函数</li>
+<li>RC对象是易变的，不适用copy-on-modify原则</li>
+</ul>
+<blockquote>
+<p>Reference classes are implemented using R code: they are a special S4 class that wraps around an environment.</p>
+</blockquote>
+<p>RC是特殊的S4类</p>
+</div>
+<div class="section level4">
+<h4>7.4.1 创建对象</h4>
+<p>RC最适合有状态的对象，比如银行账户，</p>
+<pre class="r"><code>Account &lt;- setRefClass(&quot;Account&quot;)
+Account$new()</code></pre>
+<pre><code>## Reference class object of class &quot;Account&quot;</code></pre>
+<pre class="r"><code>Account &lt;- setRefClass(&quot;Account&quot;,
+                       fields = list(balance = &quot;numeric&quot;))
+a &lt;- Account$new(balance = 100)
+# 使用$设置获取变量的值
+a$balance</code></pre>
+<pre><code>## [1] 100</code></pre>
+<pre class="r"><code>a$balance &lt;- 200
+a$balance</code></pre>
+<pre><code>## [1] 200</code></pre>
+<pre class="r"><code># RC没有使用copy-on-modify
+b &lt;- a
+b$balance</code></pre>
+<pre><code>## [1] 200</code></pre>
+<pre class="r"><code>a$balance &lt;- 0
+b$balance</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code># 正是这个原因，才有一个copy()函数
+c &lt;- a$copy()
+c$balance</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>a$balance &lt;- 100
+c$balance</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code># 注意&lt;&lt;-
+Account &lt;- setRefClass(&quot;Account&quot;,
+                       fields = list(balance = &quot;numeric&quot;),
+                       methods = list(
+                           withdraw = function(x) {
+                               balance &lt;&lt;- balance - x
+                           },
+                           deposit = function(x) {
+                               balance &lt;&lt;- balance + x
+                           }
+                       )
+)
+
+a &lt;- Account$new(balance = 100)
+a$deposit(100)
+a$balance</code></pre>
+<pre><code>## [1] 200</code></pre>
+<pre class="r"><code># 继承
+NoOverdraft &lt;- setRefClass(&quot;NoOverdraft&quot;,
+                           contains = &quot;Account&quot;,
+                           methods = list(
+                               withdraw = function(x) {
+                                   if (balance &lt; x) stop(&quot;Not enough money&quot;)
+                                   balance &lt;&lt;- balance - x
+                               }
+                           )
+)
+# accountJohn &lt;- NoOverdraft$new(balance = 100)
+# accountJohn$deposit(50)
+# accountJohn$balance
+# accountJohn$withdraw(200)</code></pre>
+<p>RC类的一些函数，</p>
+<ul>
+<li>copy()</li>
+<li>callSuper()，调用父类</li>
+<li>field()获得属性值</li>
+<li>export()类似as()</li>
+<li>show()</li>
+</ul>
+<p>详细参考setRefClass()函数</p>
+<p>使用is(x, “refClass”)判断一个对象是否RC</p>
+</div>
+<div class="section level4">
+<h4>7.4.3 方法分配</h4>
+<p>与前两个面向对象系统不同，RC方法分配和主流语言类似，调用形式为x$f，R会在x类中寻找f方法，如果没有找到则会在x的父类中寻找，如果找不到则会在父类的父类中寻找……</p>
+</div>
+<div id="-13" class="section level4">
+<h4>7.4.4 作业</h4>
+<ol style="list-style-type: decimal">
+<li></li>
+</ol>
+<p>2.我说过base包里没有RC类，那是一个简化。使用getClasses()看看哪个类别继承了envRefClass，这些类是干嘛的？</p>
+<pre class="r"><code>cls &lt;- getClasses(where = parent.env(environment()), inherits = T)
+ref &lt;- Filter(function(x) extends(x, &quot;envRefClass&quot;), cls)
+ref</code></pre>
+<pre><code>## [1] &quot;envRefClass&quot;      &quot;localRefClass&quot;    &quot;refGeneratorSlot&quot;</code></pre>
+</div>
+<div class="section level4">
+<h4>7.5该使用哪个类？</h4>
+<ul>
+<li>大部分情况下，S3足够了，而且能用最少的代码实现相应功能</li>
+<li>对于一些复杂的系统，典型的如Matrix包，S4是一个不错的选择</li>
+<li>RC尽量不用，它会修改原来的对象，这会产生副作用，除非你真想先这样做</li>
+</ul>
 </div>
 </div>
 
