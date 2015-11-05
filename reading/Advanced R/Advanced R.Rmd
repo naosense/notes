@@ -1415,4 +1415,247 @@ ref
 - 对于一些复杂的系统，典型的如Matrix包，S4是一个不错的选择
 - RC尽量不用，它会修改原来的对象，这会产生副作用，除非你真想先这样做
 
+###8.环境（environment）
+
+环境是在R语言里关于作用域的一种数据结构，还有一点，修改环境里的绑定变量，不会产生拷贝。
+
+#### 8.1 环境基本知识
+
+可以把环境看做一个名字的集合，这些名字指向内存中的对象。
+
+```{r}
+e <- new.env()
+e$a <- FALSE
+e$b <- "a"
+e$c <- 2.3
+e$d <- 1:3
+
+```
+
+注意对象并不在环境中，不同的名字可以指向同一个对象。
+
+```{r}
+e$a <- e$d
+
+```
+
+还可以指向值相同的不同对象，
+
+```{r}
+e$a <- 1:3
+
+```
+
+如果一个对象没有名字指向它，它就会被垃圾处理器回收。
+
+每个环境都有一个父环境，只有**空环境**没有父环境。
+
+环境和列表类似，但有四个不同，
+
+- 环境的每个对象都有一个唯一的名字，列表名字可有可无，也可以重复
+- 环境的每个对象都是无序的，换句话说，顺序对于环境的变量没有意义，列表中的元素是有序的
+- 每个环境都有一个父环境
+- 环境具有引用参考(reference semantics)
+
+严格来说，一个环境包含两个部分，
+
+- frame，保存着名字对象绑定关系
+- 一个指向父环境的指针
+
+R语言有四个特殊环境，
+
+- globalenv()，全局环境也就是交互环境，它的父环境为library或require最后一个导入的包
+- baseenv()，基础环境，也就是base包环境，它的父环境为空环境
+- emptyenv()，空环境是所有环境的祖先，唯一没有父环境的环境
+- environment()，当前环境
+
+search()可以列出全局环境的所有父环境，
+
+```{r}
+search()
+as.environment("package:stats")
+
+```
+
+创建新环境使用new.env()，列出环境的所有变量使用ls()，父环境使用parent.env()得到。
+
+```{r}
+e <- new.env()
+parent.env(e)
+ls(e)
+
+```
+
+可以像list一样修改环境的绑定值
+
+```{r}
+e$a <- 1
+e$b <- 2
+```
+
+给定名字，使用[[，$以及get可以获得它的值，
+
+- 前两个只会在一个环境中寻找，没有找到则返回null
+- get可以指定环境，找不到会报错
+
+```{r}
+e$c <- 3
+e$c
+e[["c"]]
+get("c", envir = e)
+
+```
+
+一个环境删除变量要用rm()，而list直接绑定null.
+```{r}
+e <- new.env()
+e$a <- 1
+e$a <- NULL
+ls(e)
+rm("a", envir = e)
+ls(e)
+
+```
+
+使用exist()判断一个名字是否已经绑定，
+
+```{r}
+x <- 10
+exists("x", envir = e)
+exists("x", envir = e, inherits = FALSE)
+
+```
+
+判断环境是否相同，一定要用identical()
+
+```{r}
+identical(globalenv(), environment())
+# globalenv() == environment()
+```
+
+#### 8.1.1 作业
+
+3.使用循环或递归实现自己的search()
+
+```{r}
+my_search <- function() {
+    e <- globalenv()
+    es <- c()
+    while(TRUE) {
+        if (identical(e, emptyenv()))
+            break
+        es <- c(es, e)
+        e <- parent.env(e)
+    }
+    es
+}
+my_search()
+```
+
+#### 8.2 在环境中使用递归
+
+```{r}
+where <- function(name, env = parent.frame()) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop("Can't find ", name, call. = F)
+    } else if (exists(name, envir = env, inherits = FALSE)) {
+        # Success case
+        env
+    } else {
+        # Recursive case
+        where(name, parent.env(env))
+    }
+}
+
+```
+
+函数有三个基本的情况：
+
+- 基本情形，环境为一个空环境
+- 成功的情形
+- 递归的情形
+
+where提供了一个环境中使用递归的模板。同样的，可以用循环达到同样的目的，但是递归意思更明确清晰。
+
+#### 8.2.1作业
+
+1.修改where，使其能找到所有环境中的name。
+
+```{r}
+where_all <- function(name, env = parent.frame()) {
+    es <- c()
+    
+    while(TRUE) {
+        if (identical(env, emptyenv()))
+            break
+        if(exists(name, envir = env, inherits = FALSE))
+            es <- c(es, env)
+        env <- parent.env(env)
+    }
+    es
+
+}
+
+```
+
+2.使用where的风格写一个自己的get函数
+
+```{r}
+my_get <- function(name, env = parent.frame()) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop("Can't find ", name, call. = FALSE)
+    } else if (exists(name, envir = env, inherits = FALSE)) {
+        # Success case
+        env[[name]]
+    } else {
+        # Recursive case
+        my_get(name, parent.env(env))
+    }
+}
+
+```
+
+3.写一个fget函数只搜索函数，它有两个参数name,env。再加一点挑战，加上一个inherit参数，用来决定是否要去父环境中查找。
+
+```{r}
+fget <- function(name, env = parent.frame(), inherit = FALSE) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop("Can't find ", name, call. = FALSE)
+    } else if (exists(name, envir = env, mode = "function", inherits = FALSE)) {
+        # Success case
+        match.fun(name)
+    } else {
+        # Recursive case
+        if (inherit)
+            fget(name, parent.env(env), inherit)
+        else
+            NULL
+    }
+}
+
+```
+
+4.写一个自己的exists()
+
+```{r}
+my_exists <- function(x, env = parent.frame(), inherit = F) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        FALSE
+    } else if (length(ls(env, pattern = paste("\\b", x, "\\b", sep = "")))) {
+        # Success case
+        TRUE
+    } else {
+        # Recursive case
+        if (inherit)
+            my_exists(x, parent.env(env), inherit)
+        else
+            FALSE
+    }
+}
+
+```
 

@@ -981,7 +981,7 @@ T %xor% F</code></pre>
 x &lt;- 1:10
 rr(x) &lt;- 5
 x</code></pre>
-<pre><code>##  [1]  1  2  3  4  5  6  7  8  5 10</code></pre>
+<pre><code>##  [1] 1 2 3 4 5 6 7 8 9 5</code></pre>
 </div>
 <div class="section level4">
 <h4>6.6 返回值</h4>
@@ -1366,6 +1366,247 @@ ref</code></pre>
 <li>对于一些复杂的系统，典型的如Matrix包，S4是一个不错的选择</li>
 <li>RC尽量不用，它会修改原来的对象，这会产生副作用，除非你真想先这样做</li>
 </ul>
+</div>
+</div>
+<div id="environment" class="section level3">
+<h3>8.环境（environment）</h3>
+<p>环境是在R语言里关于作用域的一种数据结构，还有一点，修改环境里的绑定变量，不会产生拷贝。</p>
+<div class="section level4">
+<h4>8.1 环境基本知识</h4>
+<p>可以把环境看做一个名字的集合，这些名字指向内存中的对象。</p>
+<pre class="r"><code>e &lt;- new.env()
+e$a &lt;- FALSE
+e$b &lt;- &quot;a&quot;
+e$c &lt;- 2.3
+e$d &lt;- 1:3</code></pre>
+<p>注意对象并不在环境中，不同的名字可以指向同一个对象。</p>
+<pre class="r"><code>e$a &lt;- e$d</code></pre>
+<p>还可以指向值相同的不同对象，</p>
+<pre class="r"><code>e$a &lt;- 1:3</code></pre>
+<p>如果一个对象没有名字指向它，它就会被垃圾处理器回收。</p>
+<p>每个环境都有一个父环境，只有<strong>空环境</strong>没有父环境。</p>
+<p>环境和列表类似，但有四个不同，</p>
+<ul>
+<li>环境的每个对象都有一个唯一的名字，列表名字可有可无，也可以重复</li>
+<li>环境的每个对象都是无序的，换句话说，顺序对于环境的变量没有意义，列表中的元素是有序的</li>
+<li>每个环境都有一个父环境</li>
+<li>环境具有引用参考(reference semantics)</li>
+</ul>
+<p>严格来说，一个环境包含两个部分，</p>
+<ul>
+<li>frame，保存着名字对象绑定关系</li>
+<li>一个指向父环境的指针</li>
+</ul>
+<p>R语言有四个特殊环境，</p>
+<ul>
+<li>globalenv()，全局环境也就是交互环境，它的父环境为library或require最后一个导入的包</li>
+<li>baseenv()，基础环境，也就是base包环境，它的父环境为空环境</li>
+<li>emptyenv()，空环境是所有环境的祖先，唯一没有父环境的环境</li>
+<li>environment()，当前环境</li>
+</ul>
+<p>search()可以列出全局环境的所有父环境，</p>
+<pre class="r"><code>search()</code></pre>
+<pre><code>## [1] &quot;.GlobalEnv&quot;        &quot;package:stats&quot;     &quot;package:graphics&quot; 
+## [4] &quot;package:grDevices&quot; &quot;package:utils&quot;     &quot;package:datasets&quot; 
+## [7] &quot;package:methods&quot;   &quot;Autoloads&quot;         &quot;package:base&quot;</code></pre>
+<pre class="r"><code>as.environment(&quot;package:stats&quot;)</code></pre>
+<pre><code>## &lt;environment: package:stats&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:stats&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/stats&quot;</code></pre>
+<p>创建新环境使用new.env()，列出环境的所有变量使用ls()，父环境使用parent.env()得到。</p>
+<pre class="r"><code>e &lt;- new.env()
+parent.env(e)</code></pre>
+<pre><code>## &lt;environment: R_GlobalEnv&gt;</code></pre>
+<pre class="r"><code>ls(e)</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>可以像list一样修改环境的绑定值</p>
+<pre class="r"><code>e$a &lt;- 1
+e$b &lt;- 2</code></pre>
+<p>给定名字，使用[[，$以及get可以获得它的值，</p>
+<ul>
+<li>前两个只会在一个环境中寻找，没有找到则返回null</li>
+<li>get可以指定环境，找不到会报错</li>
+</ul>
+<pre class="r"><code>e$c &lt;- 3
+e$c</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>e[[&quot;c&quot;]]</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>get(&quot;c&quot;, envir = e)</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>一个环境删除变量要用rm()，而list直接绑定null.</p>
+<pre class="r"><code>e &lt;- new.env()
+e$a &lt;- 1
+e$a &lt;- NULL
+ls(e)</code></pre>
+<pre><code>## [1] &quot;a&quot;</code></pre>
+<pre class="r"><code>rm(&quot;a&quot;, envir = e)
+ls(e)</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>使用exist()判断一个名字是否已经绑定，</p>
+<pre class="r"><code>x &lt;- 10
+exists(&quot;x&quot;, envir = e)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>exists(&quot;x&quot;, envir = e, inherits = FALSE)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<p>判断环境是否相同，一定要用identical()</p>
+<pre class="r"><code>identical(globalenv(), environment())</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code># globalenv() == environment()</code></pre>
+</div>
+<div id="-14" class="section level4">
+<h4>8.1.1 作业</h4>
+<p>3.使用循环或递归实现自己的search()</p>
+<pre class="r"><code>my_search &lt;- function() {
+    e &lt;- globalenv()
+    es &lt;- c()
+    while(TRUE) {
+        if (identical(e, emptyenv()))
+            break
+        es &lt;- c(es, e)
+        e &lt;- parent.env(e)
+    }
+    es
+}
+my_search()</code></pre>
+<pre><code>## [[1]]
+## &lt;environment: R_GlobalEnv&gt;
+## 
+## [[2]]
+## &lt;environment: package:stats&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:stats&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/stats&quot;
+## 
+## [[3]]
+## &lt;environment: package:graphics&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:graphics&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/graphics&quot;
+## 
+## [[4]]
+## &lt;environment: package:grDevices&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:grDevices&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/grDevices&quot;
+## 
+## [[5]]
+## &lt;environment: package:utils&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:utils&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/utils&quot;
+## 
+## [[6]]
+## &lt;environment: package:datasets&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:datasets&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/datasets&quot;
+## 
+## [[7]]
+## &lt;environment: package:methods&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:methods&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/methods&quot;
+## 
+## [[8]]
+## &lt;environment: 0x0000000006509610&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;Autoloads&quot;
+## 
+## [[9]]
+## &lt;environment: base&gt;</code></pre>
+</div>
+<div class="section level4">
+<h4>8.2 在环境中使用递归</h4>
+<pre class="r"><code>where &lt;- function(name, env = parent.frame()) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop(&quot;Can't find &quot;, name, call. = F)
+    } else if (exists(name, envir = env, inherits = FALSE)) {
+        # Success case
+        env
+    } else {
+        # Recursive case
+        where(name, parent.env(env))
+    }
+}</code></pre>
+<p>函数有三个基本的情况：</p>
+<ul>
+<li>基本情形，环境为一个空环境</li>
+<li>成功的情形</li>
+<li>递归的情形</li>
+</ul>
+<p>where提供了一个环境中使用递归的模板。同样的，可以用循环达到同样的目的，但是递归意思更明确清晰。</p>
+</div>
+<div id="-15" class="section level4">
+<h4>8.2.1作业</h4>
+<p>1.修改where，使其能找到所有环境中的name。</p>
+<pre class="r"><code>where_all &lt;- function(name, env = parent.frame()) {
+    es &lt;- c()
+    
+    while(TRUE) {
+        if (identical(env, emptyenv()))
+            break
+        if(exists(name, envir = env, inherits = FALSE))
+            es &lt;- c(es, env)
+        env &lt;- parent.env(env)
+    }
+    es
+
+}</code></pre>
+<p>2.使用where的风格写一个自己的get函数</p>
+<pre class="r"><code>my_get &lt;- function(name, env = parent.frame()) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop(&quot;Can't find &quot;, name, call. = FALSE)
+    } else if (exists(name, envir = env, inherits = FALSE)) {
+        # Success case
+        env[[name]]
+    } else {
+        # Recursive case
+        my_get(name, parent.env(env))
+    }
+}</code></pre>
+<p>3.写一个fget函数只搜索函数，它有两个参数name,env。再加一点挑战，加上一个inherit参数，用来决定是否要去父环境中查找。</p>
+<pre class="r"><code>fget &lt;- function(name, env = parent.frame(), inherit = FALSE) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        stop(&quot;Can't find &quot;, name, call. = FALSE)
+    } else if (exists(name, envir = env, mode = &quot;function&quot;, inherits = FALSE)) {
+        # Success case
+        match.fun(name)
+    } else {
+        # Recursive case
+        if (inherit)
+            fget(name, parent.env(env), inherit)
+        else
+            NULL
+    }
+}</code></pre>
+<p>4.写一个自己的exists()</p>
+<pre class="r"><code>my_exists &lt;- function(x, env = parent.frame(), inherit = F) {
+    if (identical(env, emptyenv())) {
+        # Base case
+        FALSE
+    } else if (length(ls(env, pattern = paste(&quot;\\b&quot;, x, &quot;\\b&quot;, sep = &quot;&quot;)))) {
+        # Success case
+        TRUE
+    } else {
+        # Recursive case
+        if (inherit)
+            my_exists(x, parent.env(env), inherit)
+        else
+            FALSE
+    }
+}</code></pre>
 </div>
 </div>
 
