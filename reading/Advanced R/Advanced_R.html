@@ -981,7 +981,7 @@ T %xor% F</code></pre>
 x &lt;- 1:10
 rr(x) &lt;- 5
 x</code></pre>
-<pre><code>##  [1] 1 2 3 4 5 6 7 8 9 5</code></pre>
+<pre><code>##  [1]  1  2  5  4  5  6  7  8  9 10</code></pre>
 </div>
 <div class="section level4">
 <h4>6.6 返回值</h4>
@@ -1517,7 +1517,7 @@ my_search()</code></pre>
 ## [1] &quot;C:/Program Files/R/R-3.2.2/library/methods&quot;
 ## 
 ## [[8]]
-## &lt;environment: 0x0000000006509610&gt;
+## &lt;environment: 0x0000000005c995d0&gt;
 ## attr(,&quot;name&quot;)
 ## [1] &quot;Autoloads&quot;
 ## 
@@ -1607,6 +1607,134 @@ my_search()</code></pre>
             FALSE
     }
 }</code></pre>
+</div>
+<div class="section level4">
+<h4>8.3 函数环境</h4>
+<p>R语言中大部分函数的不是由new.env()手动创建的，而是由函数自动创建的。在R语言中与函数有关的有四种环境，</p>
+<ul>
+<li>enclosing environment，函数创建时所在的环境，每个环境有且只有一个enclosing environment，而函数其他三种环境或有0,1或多个</li>
+<li>bind environment，当使用&lt;-将函数绑定到变量将会新建一个bind environment</li>
+<li>execute environment，调用一个函数时会创建一个短暂的执行环境，用来存储执行过程中的一些变量</li>
+<li>calling environment，每个执行环境都有一个相联系的调用环境，调用环境用来告诉系统函数哪里</li>
+</ul>
+</div>
+<div id="enclosing-environment" class="section level4">
+<h4>8.3.1 enclosing environment</h4>
+<p>获得一个函数的enclosing environment可以使用environment(f)，</p>
+<pre class="r"><code>y &lt;- 1
+f &lt;- function(x) x + y
+environment(f)</code></pre>
+<pre><code>## &lt;environment: R_GlobalEnv&gt;</code></pre>
+<p>每个函数都有一个enclosing environment且永远不变</p>
+</div>
+<div id="binding-environment" class="section level4">
+<h4>8.3.2 binding environment</h4>
+<p>binding environment是绑定发生的环境，</p>
+<blockquote>
+<p>The binding environments of a function are all the environments which have a binding to it.</p>
+</blockquote>
+<pre class="r"><code># 绑定环境为e
+e &lt;- new.env()
+e$g &lt;- function() 1</code></pre>
+<p>enclosing environment决定函数如何找到变量，bind environment决定我们怎么找到函数</p>
+<p>enclosing environment与bind environment对于package的不同，</p>
+<pre class="r"><code>environment(sd)</code></pre>
+<pre><code>## &lt;environment: namespace:stats&gt;</code></pre>
+<pre class="r"><code>#&gt; &lt;environment: namespace:stats&gt;
+where(&quot;sd&quot;)</code></pre>
+<pre><code>## &lt;environment: package:stats&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:stats&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/stats&quot;</code></pre>
+<pre class="r"><code># &lt;environment: package:stats&gt;</code></pre>
+<blockquote>
+<p>This works because every package has two environments associated with it: the package environment and the namespace environment. The package environment contains every publicly accessible function, and is placed on the search path. The namespace environment contains all functions (including internal functions), and its parent environment is a special imports environment that contains bindings to all the functions that the package needs. Every exported function in a package is bound into the package environment, but enclosed by the namespace environment.</p>
+</blockquote>
+</div>
+<div id="execute-environment" class="section level4">
+<h4>8.3.3 execute environment</h4>
+<pre class="r"><code>g &lt;- function(x) {
+    if (!exists(&quot;a&quot;, inherits = FALSE)) {
+        message(&quot;Defining a&quot;)
+        a &lt;- 1
+    } else {
+        a &lt;- a + 1
+    }
+    a
+}
+g(10)</code></pre>
+<pre><code>## Defining a</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>g(10)</code></pre>
+<pre><code>## Defining a</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>函数每次执行都会产生一个新的执行环境，执行环境的父环境为enclose environment，一旦函数执行完毕，执行环境就会销毁，不过当函数是在一个函数内部创建时，执行环境不会消失。</p>
+</div>
+<div id="calling-environment" class="section level4">
+<h4>8.3.4 calling environment</h4>
+<pre class="r"><code>h &lt;- function() {
+    x &lt;- 10
+    function() {
+        x
+    }
+}
+i &lt;- h()
+x &lt;- 20
+i()</code></pre>
+<pre><code>## [1] 10</code></pre>
+<p>使用parent.frame()得到函数的调用环境，</p>
+<pre class="r"><code>f2 &lt;- function() {
+x &lt;- 10
+function() {
+    def &lt;- get(&quot;x&quot;, environment())
+    cll &lt;- get(&quot;x&quot;, parent.frame())
+    list(defined = def, called = cll)
+}
+}
+g2 &lt;- f2()
+x &lt;- 20
+str(g2())</code></pre>
+<pre><code>## List of 2
+##  $ defined: num 10
+##  $ called : num 20</code></pre>
+<p>每个执行环境有两个父环境：enclose environment和calling environment</p>
+<p>动态作用域</p>
+<blockquote>
+<p>Looking up variables in the calling environment rather than in the enclosing environment is called dynamic scoping.</p>
+</blockquote>
+</div>
+<div id="-16" class="section level4">
+<h4>8.3.5作业</h4>
+<p>5.写一个增强版的str，可以显示一个函数定义环境和绑定环境</p>
+<pre class="r"><code>str2 &lt;- function(f) {
+#     ff &lt;- substitute(substitute(f))
+    list(enclose=environment(f), bind=where(as.character(substitute(f))))
+}
+
+str2(sd)</code></pre>
+<pre><code>## $enclose
+## &lt;environment: namespace:stats&gt;
+## 
+## $bind
+## &lt;environment: package:stats&gt;
+## attr(,&quot;name&quot;)
+## [1] &quot;package:stats&quot;
+## attr(,&quot;path&quot;)
+## [1] &quot;C:/Program Files/R/R-3.2.2/library/stats&quot;</code></pre>
+</div>
+<div class="section level4">
+<h4>8.4 绑定一个变量到名字</h4>
+<p>&lt;- 在当前环境将一个对象绑定到名字，&lt;&lt;- 从父环境查找变量进行赋值，如果没有找到将在全局环境创建一个新变量</p>
+</div>
+<div id="explicit-environments" class="section level4">
+<h4>8.5 Explicit environments</h4>
+<p>环境是一种有用的数据结构，它可以用来解决三类问题，</p>
+<ul>
+<li>处理大数据时避免拷贝</li>
+<li>管理包的状态</li>
+<li>高效的从名字查找值</li>
+</ul>
 </div>
 </div>
 

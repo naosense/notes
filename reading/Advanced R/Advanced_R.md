@@ -1716,7 +1716,7 @@ x
 ```
 
 ```
-##  [1] 1 2 3 4 5 6 7 8 9 5
+##  [1]  1  2  5  4  5  6  7  8  9 10
 ```
 
 #### 6.6 返回值
@@ -2666,7 +2666,7 @@ my_search()
 ## [1] "C:/Program Files/R/R-3.2.2/library/methods"
 ## 
 ## [[8]]
-## <environment: 0x0000000006509610>
+## <environment: 0x0000000005c995d0>
 ## attr(,"name")
 ## [1] "Autoloads"
 ## 
@@ -2780,4 +2780,200 @@ my_exists <- function(x, env = parent.frame(), inherit = F) {
     }
 }
 ```
+
+#### 8.3 函数环境
+
+R语言中大部分函数的不是由new.env()手动创建的，而是由函数自动创建的。在R语言中与函数有关的有四种环境，
+
+- enclosing environment，函数创建时所在的环境，每个环境有且只有一个enclosing environment，而函数其他三种环境或有0,1或多个
+- bind environment，当使用<-将函数绑定到变量将会新建一个bind environment
+- execute environment，调用一个函数时会创建一个短暂的执行环境，用来存储执行过程中的一些变量
+- calling environment，每个执行环境都有一个相联系的调用环境，调用环境用来告诉系统函数哪里
+
+#### 8.3.1 enclosing environment
+
+获得一个函数的enclosing environment可以使用environment(f)，
+
+
+```r
+y <- 1
+f <- function(x) x + y
+environment(f)
+```
+
+```
+## <environment: R_GlobalEnv>
+```
+
+每个函数都有一个enclosing environment且永远不变
+
+#### 8.3.2 binding environment
+
+binding environment是绑定发生的环境，
+
+> The binding environments of a function are all the environments which have a binding to it.
+
+
+```r
+# 绑定环境为e
+e <- new.env()
+e$g <- function() 1
+```
+
+enclosing environment决定函数如何找到变量，bind environment决定我们怎么找到函数
+
+enclosing environment与bind environment对于package的不同，
+
+
+```r
+environment(sd)
+```
+
+```
+## <environment: namespace:stats>
+```
+
+```r
+#> <environment: namespace:stats>
+where("sd")
+```
+
+```
+## <environment: package:stats>
+## attr(,"name")
+## [1] "package:stats"
+## attr(,"path")
+## [1] "C:/Program Files/R/R-3.2.2/library/stats"
+```
+
+```r
+# <environment: package:stats>
+```
+
+> This works because every package has two environments associated with it: the package environment and the namespace environment. The package environment contains every publicly accessible function, and is placed on the search path. The namespace environment contains all functions (including internal functions), and its parent environment is a special imports environment that contains bindings to all the functions that the package needs. Every exported function in a package is bound into the package environment, but enclosed by the namespace environment.
+
+#### 8.3.3 execute environment
+
+
+```r
+g <- function(x) {
+    if (!exists("a", inherits = FALSE)) {
+        message("Defining a")
+        a <- 1
+    } else {
+        a <- a + 1
+    }
+    a
+}
+g(10)
+```
+
+```
+## Defining a
+```
+
+```
+## [1] 1
+```
+
+```r
+g(10)
+```
+
+```
+## Defining a
+```
+
+```
+## [1] 1
+```
+
+函数每次执行都会产生一个新的执行环境，执行环境的父环境为enclose environment，一旦函数执行完毕，执行环境就会销毁，不过当函数是在一个函数内部创建时，执行环境不会消失。
+
+#### 8.3.4 calling environment
+
+
+```r
+h <- function() {
+    x <- 10
+    function() {
+        x
+    }
+}
+i <- h()
+x <- 20
+i()
+```
+
+```
+## [1] 10
+```
+
+使用parent.frame()得到函数的调用环境，
+
+
+```r
+f2 <- function() {
+x <- 10
+function() {
+    def <- get("x", environment())
+    cll <- get("x", parent.frame())
+    list(defined = def, called = cll)
+}
+}
+g2 <- f2()
+x <- 20
+str(g2())
+```
+
+```
+## List of 2
+##  $ defined: num 10
+##  $ called : num 20
+```
+
+每个执行环境有两个父环境：enclose environment和calling environment
+
+动态作用域
+
+> Looking up variables in the calling environment rather than in the enclosing environment is called dynamic scoping.
+
+#### 8.3.5作业
+
+5.写一个增强版的str，可以显示一个函数定义环境和绑定环境
+
+
+```r
+str2 <- function(f) {
+#     ff <- substitute(substitute(f))
+    list(enclose=environment(f), bind=where(as.character(substitute(f))))
+}
+
+str2(sd)
+```
+
+```
+## $enclose
+## <environment: namespace:stats>
+## 
+## $bind
+## <environment: package:stats>
+## attr(,"name")
+## [1] "package:stats"
+## attr(,"path")
+## [1] "C:/Program Files/R/R-3.2.2/library/stats"
+```
+
+#### 8.4 绑定一个变量到名字
+
+<- 在当前环境将一个对象绑定到名字，<<- 从父环境查找变量进行赋值，如果没有找到将在全局环境创建一个新变量
+
+#### 8.5 Explicit environments
+
+环境是一种有用的数据结构，它可以用来解决三类问题，
+
+- 处理大数据时避免拷贝
+- 管理包的状态
+- 高效的从名字查找值
+
 
