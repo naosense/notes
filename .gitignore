@@ -25,3 +25,4 @@ vignettes/*.pdf
 # office
 *.xls
 *.xlsx
+.Rproj.user

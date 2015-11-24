@@ -1,11 +1,11 @@
 ---
 title: "Advanced R"
 output: 
-  html_document: 
-    keep_md: yes
+    html_document: 
+        keep_md: yes
 ---
 
-### 2.数据结构
+### 2. 数据结构
 
 #### 2.1 向量(vector)
 
@@ -64,15 +64,15 @@ str(y)
 
 #### 2.1.3 作业
 
-1.atomic vector的六种类型？list与atomic的区别？
+1. atomic vector的六种类型？list与atomic的区别？
 
 atomic六种类型为int，double，logic，character，complex，raw。list元素类型可以不同，vector只能同种类型，list可以嵌套，vector不能嵌套。
 
-2.is.vector和is.numeric与is.list和is.character有什么根本的区别？
+2. is.vector和is.numeric与is.list和is.character有什么根本的区别？
 
 is.vector测试一个向量是否只有名字属性，要测试一个对象是否为向量用is.atomic(x)||is.list(x)，is.list()测试是否为列表，is.numeric测试一个对象是否是数值型，包括integer和double，is.character测试一个向量是否是字符型。
 
-3.强制转换
+3. 强制转换
 
 ```{r}
 c(1, F)
@@ -82,9 +82,9 @@ c(T, 1L)
 
 ```
 
-4.将列表转换成向量为什么要用unlist而不用as.vector?
+4. 将列表转换成向量为什么要用unlist而不用as.vector?
 
-5.解释下面表示的结果
+5. 解释下面表示的结果
 
 ```{r}
 1 == "1"
@@ -93,7 +93,7 @@ c(T, 1L)
 
 ```
 
-6.为什么NA是一个逻辑向量？
+6. 为什么NA是一个逻辑向量？
 
 #### 2.2 属性
 
@@ -1291,9 +1291,9 @@ setGeneric("union")
 # setMethods()用来创建方法
 setMethod("union",
           c(x = "data.frame", y = "data.frame"),
-function(x, y) {
-    unique(rbind(x, y))
-}
+          function(x, y) {
+              unique(rbind(x, y))
+          }
 )
 # 如果你重新创建了一个generic，需要调用standardGeneric()，与s3的UseMethod()类似
 setGeneric("myGeneric", function(x) {
@@ -1594,7 +1594,7 @@ where_all <- function(name, env = parent.frame()) {
         env <- parent.env(env)
     }
     es
-
+    
 }
 
 ```
@@ -1745,12 +1745,12 @@ i()
 
 ```{r}
 f2 <- function() {
-x <- 10
-function() {
-    def <- get("x", environment())
-    cll <- get("x", parent.frame())
-    list(defined = def, called = cll)
-}
+    x <- 10
+    function() {
+        def <- get("x", environment())
+        cll <- get("x", parent.frame())
+        list(defined = def, called = cll)
+    }
 }
 g2 <- f2()
 x <- 20
@@ -1770,7 +1770,7 @@ str(g2())
 
 ```{r}
 str2 <- function(f) {
-#     ff <- substitute(substitute(f))
+    #     ff <- substitute(substitute(f))
     list(enclose=environment(f), bind=where(as.character(substitute(f))))
 }
 
@@ -1789,4 +1789,240 @@ str2(sd)
 - 管理包的状态
 - 高效的从名字查找值
 
+### 9.调试技巧以及防御式编程
 
+#### 9.1 调试技巧
+
+- 发现bug
+- 可重复
+- 定位
+- 解决并且测试
+
+#### 9.2 调试工具
+
+- RStudio的监视窗口和traceback()函数，打印出函数的调用序列
+- RStudio的“Rerun with Debug”工具以及option(error=browser)，将会在错误的地方打开一个交互的回话
+- RStudio的断点和browser()函数，可以放在函数的任意地方，将会打开一个交互的会话
+
+#### 9.4 防御式编程
+
+防御式编程意为尽早的发现错误，错误被发现的越早成本越低，你调试起来也越容易。
+
+防御式编程有三种实现途径：
+
+- 对参数进行严格的验证，使用stopifnot()验证合法性
+- 避免使用非标准计算函数(non-standard evaluation)，比如transform、subset、with
+- 避免由输入决定输出类型的函数，比如[和sapply()
+
+### 10.函数式编程
+
+R本质上是一门函数式编程语言，拥有first-class的函数。
+
+函数式编程一条通用方式为，首先写一些清晰易懂的函数块，将它们组合在一起，继而形成复杂的数据结构。
+
+#### 10.1 一个引例
+
+下面通过对一个数据集的某些特定元素进行替换来展现函数编程的魅力，
+
+```{r}
+# 设定种子，产生可重复的随机数
+set.seed(1014)
+df <- data.frame(replicate(6, sample(c(1:10, -99), 6, rep = TRUE)))
+names(df) <- letters[1:6]
+df
+
+# 1.第一个版本
+df$a[df$a == -99] <- NA
+df$b[df$b == -99] <- NA
+df$c[df$c == -98] <- NA
+df$d[df$d == -99] <- NA
+df$e[df$e == -99] <- NA
+df$f[df$g == -99] <- NA
+# 2.第二个版本
+fix_missing <- function(x) {
+    x[x == -99] <- NA
+    x
+}
+df$a <- fix_missing(df$a)
+df$b <- fix_missing(df$b)
+df$c <- fix_missing(df$c)
+df$d <- fix_missing(df$d)
+df$e <- fix_missing(df$e)
+df$f <- fix_missing(df$e)
+# 3.第三个版本
+fix_missing <- function(x) {
+    x[x == -99] <- NA
+    x
+}
+# 注意这里使用了一个技巧，df[]返回一个dataframe，而df返回一个list
+df[] <- lapply(df, fix_missing)
+
+```
+
+第三个版本的优点：
+
+- 代码更紧凑
+- 如果要替换的值发生改变，只需修改一个地方
+- 对数据框的列数没有要求，你不会忘掉任何列
+- 可以应用于数据框的部分列
+
+```{r}
+df[1:5] <- lapply(df[1:5], fix_missing)
+```
+
+如果根据不同列替换不同的值呢，
+
+```{r}
+# 1.方法1
+fix_missing_99 <- function(x) {
+    x[x == -99] <- NA
+    x
+}
+fix_missing_999 <- function(x) {
+    x[x == -999] <- NA
+    x
+}
+fix_missing_9999 <- function(x) {
+    x[x == -999] <- NA
+    x
+}
+
+# 方法2
+missing_fixer <- function(na_value) {
+    function(x) {
+        x[x == na_value] <- NA
+        x
+    }
+}
+fix_missing_99 <- missing_fixer(-99)
+fix_missing_999 <- missing_fixer(-999)
+fix_missing_99(c(-99, -999))
+fix_missing_999(c(-99, -999))
+```
+
+现在设想你清理完数据，想对数据有一个总体的把握，该怎么办呢?
+
+```{r}
+# 方法1
+mean(df$a)
+median(df$a)
+sd(df$a)
+mad(df$a)
+IQR(df$a)
+mean(df$b)
+median(df$b)
+sd(df$b)
+mad(df$b)
+IQR(df$b)
+
+# 方法2，这种方法还是有重复，例如na.rm要写五次
+summary <- function(x) {
+    c(mean(x, na.rm = TRUE),
+      median(x, na.rm = TRUE),
+      sd(x, na.rm = TRUE),
+      mad(x, na.rm = TRUE),
+      IQR(x, na.rm = TRUE))
+}
+lapply(df, summary)
+# 方法3
+summary <- function(x) {
+    funs <- c(mean, median, sd, mad, IQR)
+    lapply(funs, function(f) f(x, na.rm = TRUE))
+}
+```
+
+#### 10.2 匿名函数
+
+和c，c++等语言相比，R语言中没有特定的语法可以创建一个命名函数，如果想得到一个命名函数，可以使用常规的赋值函数，否则你会得到一个匿名函数。
+
+和命名函数一样，匿名函数也有formal、body以及environment三个部分，
+```{r}
+formals(function(x = 4) g(x) + h(x))
+body(function(x = 4) g(x) + h(x))
+environment(function(x = 4) g(x) + h(x))
+```
+
+调用匿名函数的方法，
+
+```{r}
+# 这个不对
+# function(x) 3 ()
+# 这个可以
+(function(x) 3)()
+
+```
+
+匿名函数最为普遍的一个用处是创建闭包(closure)。
+
+#### 10.2.1 练习
+
+1. 给定一个函数，比如"mean"，match.fun()返回一个函数，给定一个函数，你能找到它的名字吗？为什么这在R中不可行？
+
+因为R语言中没有特定的语法创建一个命名函数，函数的组成部分中并不一定要有一个名字
+
+2. 使用lapply计算mtcars各列的相关性。
+
+```{r}
+lapply(mtcars, function(x) sd(x) / mean(x))
+
+```
+
+3. 使用integrate()和一个匿名函数计算下列曲线下的面积
+
+```{r}
+integrate(function(x) x ^ 2 - x, 0, 10)
+integrate(function(x) sin(x) - cos(x), -pi, pi)
+integrate(function(x) exp(x) / x, 10, 20)
+```
+
+4. 使用匿名函数一个好的做法是代码能够一行写完而不用{}，检查自己的代码哪些地方可以使用匿名函数代替命名函数，哪些地方必须使用一个命名函数。
+
+#### 10.3 闭包
+
+> 一个对象是一个含有函数的数据，一个闭包是一个含有数据的函数
+>                                   －John D. Cook
+
+闭包的得名是因为它包含在一个父环境中，并且能够访问所有父环境的变量。这对权限控制有着非同寻常的含义，这样就有了两层变量，父层控制操作，子层实现具体的工作。
+
+观察下面的例子，
+
+```{r}
+power <- function(exponent) {
+    function(x) {
+        x ^ exponent
+    }
+}
+square <- power(2)
+square(2)
+cube <- power(3)
+cube(2)
+
+```
+
+将它们所在的环境转换为列表，你会发现一些端倪，
+
+```{r}
+as.list(environment(square))
+as.list(environment(cube))
+
+```
+
+闭包的父环境即为创建函数的执行环境，
+
+```{r}
+power <- function(exponent) {
+    print(environment())
+    function(x) x ^ exponent
+}
+zero <- power(0)
+environment(zero)
+```
+
+函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。
+
+R语言中除了原始函数，几乎每个函数都是一个闭包，都记录了自己创建环境，特别的如全局环境。
+
+闭包的两个作用：
+
+- 函数工厂
+- 管理易变状态
