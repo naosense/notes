@@ -1716,7 +1716,7 @@ x
 ```
 
 ```
-##  [1]  1  2  3  4  5  5  7  8  9 10
+##  [1]  5  2  3  4  5  6  7  8  9 10
 ```
 
 #### 6.6 返回值
@@ -2666,7 +2666,7 @@ my_search()
 ## [1] "C:/Program Files/R/R-3.2.2/library/methods"
 ## 
 ## [[8]]
-## <environment: 0x00000000065095c0>
+## <environment: 0x00000000065095b8>
 ## attr(,"name")
 ## [1] "Autoloads"
 ## 
@@ -3426,7 +3426,7 @@ zero <- power(0)
 ```
 
 ```
-## <environment: 0x000000000a5e5900>
+## <environment: 0x000000000a7c91c8>
 ```
 
 ```r
@@ -3434,7 +3434,7 @@ environment(zero)
 ```
 
 ```
-## <environment: 0x000000000a5e5900>
+## <environment: 0x000000000a7c91c8>
 ```
 
 函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。
@@ -3445,3 +3445,400 @@ R语言中除了原始函数，几乎每个函数都是一个闭包，都记录�
 
 - 函数工厂
 - 管理易变状态
+
+#### 10.3.1 函数工厂
+
+函数工厂在两种情况下很有用：
+
+- 不同层拥有多个参数和函数体
+- 创建函数时，有些工作只需做一次
+
+#### 10.3.2 管理状态
+
+在不同的层拥有不同的参数，通过<<-可以在各层之间管理状态，例如下面的计数器，
+
+
+```r
+new_counter <- function() {
+    i <- 0
+    function() {
+        i <<- i + 1
+        i
+    }
+}
+counter_one <- new_counter()
+counter_two <- new_counter()
+counter_one()
+```
+
+```
+## [1] 1
+```
+
+```r
+counter_one()
+```
+
+```
+## [1] 2
+```
+
+```r
+counter_two()
+```
+
+```
+## [1] 1
+```
+
+按正常情况下，函数的执行环境在函数返回后就会消失，但是在闭包的情况下，闭包保留父函数的执行环境。
+
+#### 10.3.3 练习
+
+1. 为什么函数创建的函数称为闭包？
+
+2. 下面函数是做什么的？有没有更好的名字呢？
+
+
+```r
+bc <- function(lambda) {
+    if (lambda == 0) {
+        function(x) log(x)
+    } else {
+        function(x) (x ^ lambda - 1) / lambda
+    }
+}
+```
+
+3. approxfun()函数的作用和返回值
+
+4. ecdf()函数的作用和返回值
+
+5. 写一个函数计算第i个中心距。
+
+
+```r
+moment <- function(i) {
+    function(x) {
+        mean((x - mean(x)) ^ i)
+    }
+}
+# 测试
+m1 <- moment(1)
+m2 <- moment(2)
+x <- runif(100)
+stopifnot(all.equal(m1(x), 0))
+stopifnot(all.equal(m2(x), var(x) * 99 / 100))
+```
+
+6. 写一个函数取x的i个元素，让下面的代码效果一样
+
+
+```r
+pick <- function(i) {
+    function(x) {
+        x[[i]]
+    }
+}
+lapply(mtcars, pick(5))
+```
+
+```
+## $mpg
+## [1] 18
+## 
+## $cyl
+## [1] 8
+## 
+## $disp
+## [1] 360
+## 
+## $hp
+## [1] 175
+## 
+## $drat
+## [1] 3
+## 
+## $wt
+## [1] 3
+## 
+## $qsec
+## [1] 17
+## 
+## $vs
+## [1] 0
+## 
+## $am
+## [1] 0
+## 
+## $gear
+## [1] 3
+## 
+## $carb
+## [1] 2
+```
+
+```r
+# should do the same as this
+lapply(mtcars, function(x) x[[5]])
+```
+
+```
+## $mpg
+## [1] 18
+## 
+## $cyl
+## [1] 8
+## 
+## $disp
+## [1] 360
+## 
+## $hp
+## [1] 175
+## 
+## $drat
+## [1] 3
+## 
+## $wt
+## [1] 3
+## 
+## $qsec
+## [1] 17
+## 
+## $vs
+## [1] 0
+## 
+## $am
+## [1] 0
+## 
+## $gear
+## [1] 3
+## 
+## $carb
+## [1] 2
+```
+
+#### 10.4 函数列表
+
+在R语言中可以将函数存在列表中，比如下面的代码，
+
+
+```r
+compute_mean <- list(
+    base = function(x) mean(x),
+    sum = function(x) sum(x) / length(x),
+    manual = function(x) {
+        total <- 0
+        n <- length(x)
+        for (i in seq_along(x)) {
+            total <- total + x[i] / n
+        }
+        total
+    }
+)
+
+x <- runif(1e5)
+lapply(compute_mean, function(f) f(x))
+```
+
+```
+## $base
+## [1] 0.4994729
+## 
+## $sum
+## [1] 0.4994729
+## 
+## $manual
+## [1] 0.4994729
+```
+
+```r
+call_fun <- function(f, ...) f(...)
+lapply(compute_mean, call_fun, x)
+```
+
+```
+## $base
+## [1] 0.4994729
+## 
+## $sum
+## [1] 0.4994729
+## 
+## $manual
+## [1] 0.4994729
+```
+
+```r
+lapply(compute_mean, function(f) system.time(f(x)))
+```
+
+```
+## $base
+##    user  system elapsed 
+##       0       0       0 
+## 
+## $sum
+##    user  system elapsed 
+##       0       0       0 
+## 
+## $manual
+##    user  system elapsed 
+##     0.1     0.0     0.1
+```
+
+另一个例子为上面的summary函数，也可以用函数列表实现，
+
+
+```r
+x <- 1:10
+funs <- list(
+    sum = sum,
+    mean = mean,
+    median = median
+)
+lapply(funs, function(f) f(x))
+```
+
+```
+## $sum
+## [1] 55
+## 
+## $mean
+## [1] 5.5
+## 
+## $median
+## [1] 5.5
+```
+
+```r
+lapply(funs, function(f) f(x, na.rm = TRUE))
+```
+
+```
+## $sum
+## [1] 55
+## 
+## $mean
+## [1] 5.5
+## 
+## $median
+## [1] 5.5
+```
+
+#### 10.4.1 将函数移动到全局环境
+
+
+```r
+simple_tag <- function(tag) {
+    force(tag)
+    function(...) {
+        paste0("<", tag, ">", paste0(...), "</", tag, ">")
+    }
+}
+tags <- c("p", "b", "i")
+html <- lapply(setNames(tags, tags), simple_tag)
+html$p("This is ", html$b("bold"), " text.")
+```
+
+```
+## [1] "<p>This is <b>bold</b> text.</p>"
+```
+
+注意到上面的代码都有html前缀，为了代码更精简，可以使用下面三种方法，具体根据效果的持续时间而定，
+
+- 如果只是暂时的，可以使用with
+
+
+```r
+with(html, p("This is ", b("bold"), " text."))
+```
+
+```
+## [1] "<p>This is <b>bold</b> text.</p>"
+```
+
+- 为了更长的效果，可以使用attach，unattach
+
+
+```r
+attach(html)
+```
+
+```
+## The following object is masked _by_ .GlobalEnv:
+## 
+##     i
+```
+
+```r
+p("This is ", b("bold"), " text.")
+```
+
+```
+## [1] "<p>This is <b>bold</b> text.</p>"
+```
+
+```r
+detach(html)
+```
+
+- 最后一种可以用list2env将函数复制到全局环境中，然后使用rm清除
+
+
+```r
+list2env(html, environment())
+```
+
+```
+## <environment: R_GlobalEnv>
+```
+
+```r
+p("This is ", b("bold"), " text.")
+```
+
+```
+## [1] "<p>This is <b>bold</b> text.</p>"
+```
+
+```r
+rm(list = names(html), envir = environment())
+```
+
+#### 10.4.2 练习
+
+1. 使用函数列表和闭包写一个类似于base::summary()的函数
+
+
+```r
+my_summary <- function(fl) {
+    function(df) {
+        if (is.list(df)) {
+            lapply(df, function(x) unlist(lapply(fl, function(f) f(x))))
+        } else {
+            lapply(fl, function(f) f(df))
+        }
+            
+        
+    }
+}
+min_max <- my_summary(list(min=min, max=max))
+min_max(1:10)
+```
+
+```
+## $min
+## [1] 1
+## 
+## $max
+## [1] 10
+```
+
+2. 下面的命令哪个与with(x,f(z))相同？
+
+(a) x$f(x$z).
+(b) f(x$z).
+(c) x$f(z).
+(d) f(z).
+(e) It depends.
+
