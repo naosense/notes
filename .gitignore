@@ -12,6 +12,7 @@ Desktop.ini
 *-Ex.R
 
 # RStudio files
+.RData
 .Rproj.user/
 
 # produced vignettes
