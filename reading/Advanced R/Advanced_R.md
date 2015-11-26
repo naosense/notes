@@ -1716,7 +1716,7 @@ x
 ```
 
 ```
-##  [1]  5  2  3  4  5  6  7  8  9 10
+##  [1]  1  5  3  4  5  6  7  8  9 10
 ```
 
 #### 6.6 返回值
@@ -1823,7 +1823,7 @@ getwd()
 ```
 
 ```
-## [1] "F:/notes/reading/Advanced R"
+## [1] "E:/notes/reading/Advanced R"
 ```
 
 ```r
@@ -1831,7 +1831,7 @@ in_dir("~", getwd())
 ```
 
 ```
-## [1] "C:/Users/ASUS/Documents"
+## [1] "C:/Users/liupa/Documents"
 ```
 
 注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。
@@ -2666,7 +2666,7 @@ my_search()
 ## [1] "C:/Program Files/R/R-3.2.2/library/methods"
 ## 
 ## [[8]]
-## <environment: 0x00000000065095b8>
+## <environment: 0x0000000005e195e0>
 ## attr(,"name")
 ## [1] "Autoloads"
 ## 
@@ -3426,7 +3426,7 @@ zero <- power(0)
 ```
 
 ```
-## <environment: 0x000000000a7c91c8>
+## <environment: 0x00000000061224b0>
 ```
 
 ```r
@@ -3434,7 +3434,7 @@ environment(zero)
 ```
 
 ```
-## <environment: 0x000000000a7c91c8>
+## <environment: 0x00000000061224b0>
 ```
 
 函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。
@@ -3683,7 +3683,7 @@ lapply(compute_mean, function(f) system.time(f(x)))
 ## 
 ## $manual
 ##    user  system elapsed 
-##     0.1     0.0     0.1
+##    0.09    0.00    0.09
 ```
 
 另一个例子为上面的summary函数，也可以用函数列表实现，
@@ -3841,4 +3841,117 @@ min_max(1:10)
 (c) x$f(z).
 (d) f(z).
 (e) It depends.
+
+#### 10.5 案例学习：积分
+
+积分的计算有两个规则，矩形近似和梯形近似，代码如下，
+
+
+```r
+midpoint <- function(f, a, b) {
+    (b - a) * f((a + b) / 2)
+}
+trapezoid <- function(f, a, b) {
+    (b - a) / 2 * (f(a) + f(b))
+}
+midpoint_composite <- function(f, a, b, n = 10) {
+    points <- seq(a, b, length = n + 1)
+    h <- (b - a) / n
+    area <- 0
+    for (i in seq_len(n)) {
+        area <- area + h * f((points[i] + points[i + 1]) / 2)
+    }
+    area
+}
+
+midpoint(sin, 0, pi)
+```
+
+```
+## [1] 3.141593
+```
+
+```r
+trapezoid(sin, 0, pi)
+```
+
+```
+## [1] 1.923607e-16
+```
+
+```r
+trapezoid_composite <- function(f, a, b, n = 10) {
+    points <- seq(a, b, length = n + 1)
+    h <- (b - a) / n
+    area <- 0
+    for (i in seq_len(n)) {
+        area <- area + h / 2 * (f(points[i]) + f(points[i + 1]))
+    }
+    area
+}
+
+midpoint_composite(sin, 0, pi, n = 10)
+```
+
+```
+## [1] 2.008248
+```
+
+```r
+midpoint_composite(sin, 0, pi, n = 100)
+```
+
+```
+## [1] 2.000082
+```
+
+```r
+trapezoid_composite(sin, 0, pi, n = 10)
+```
+
+```
+## [1] 1.983524
+```
+
+```r
+trapezoid_composite(sin, 0, pi, n = 100)
+```
+
+```
+## [1] 1.999836
+```
+
+观察上面的代码有很多的重复，可以进一步整合，
+
+
+```r
+composite <- function(f, a, b, n = 10, rule) {
+    points <- seq(a, b, length = n + 1)
+    area <- 0
+    for (i in seq_len(n)) {
+        area <- area + rule(f, points[i], points[i + 1])
+    }
+    area
+}
+composite(sin, 0, pi, n = 10, rule = midpoint)
+```
+
+```
+## [1] 2.008248
+```
+
+```r
+composite(sin, 0, pi, n = 10, rule = trapezoid)
+```
+
+```
+## [1] 1.983524
+```
+
+#### 10.5.1 练习
+
+1. 与其创建独立的函数(比如midpoint、trapezoid)，使用函数列表该怎么修改代码？你能够使用Newton-Cotes规则根据一个参数列表创建一个函数列表吗？
+
+2. 积分方法的权衡规则是越复杂的方法计算起来越慢，但是分片越少。以sin函数为例，在0到pi区间内，计算达到同一精度各种方法的分片数，用图形展示出来。再试试不同的函数，比如sin(1 / x^2)
+
 

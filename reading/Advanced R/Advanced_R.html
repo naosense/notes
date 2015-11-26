@@ -991,7 +991,7 @@ T %xor% F</code></pre>
 x &lt;- 1:10
 rr(x) &lt;- 5
 x</code></pre>
-<pre><code>##  [1]  5  2  3  4  5  6  7  8  9 10</code></pre>
+<pre><code>##  [1]  1  5  3  4  5  6  7  8  9 10</code></pre>
 </div>
 <div class="section level4">
 <h4>6.6 返回值</h4>
@@ -1047,9 +1047,9 @@ f1() == 1</code></pre>
     force(code)
 }
 getwd()</code></pre>
-<pre><code>## [1] &quot;F:/notes/reading/Advanced R&quot;</code></pre>
+<pre><code>## [1] &quot;E:/notes/reading/Advanced R&quot;</code></pre>
 <pre class="r"><code>in_dir(&quot;~&quot;, getwd())</code></pre>
-<pre><code>## [1] &quot;C:/Users/ASUS/Documents&quot;</code></pre>
+<pre><code>## [1] &quot;C:/Users/liupa/Documents&quot;</code></pre>
 <p>注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。</p>
 </div>
 <div id="-10" class="section level4">
@@ -1527,7 +1527,7 @@ my_search()</code></pre>
 ## [1] &quot;C:/Program Files/R/R-3.2.2/library/methods&quot;
 ## 
 ## [[8]]
-## &lt;environment: 0x00000000065095b8&gt;
+## &lt;environment: 0x0000000005e195e0&gt;
 ## attr(,&quot;name&quot;)
 ## [1] &quot;Autoloads&quot;
 ## 
@@ -2016,9 +2016,9 @@ cube(2)</code></pre>
     function(x) x ^ exponent
 }
 zero &lt;- power(0)</code></pre>
-<pre><code>## &lt;environment: 0x000000000a7c91c8&gt;</code></pre>
+<pre><code>## &lt;environment: 0x00000000061224b0&gt;</code></pre>
 <pre class="r"><code>environment(zero)</code></pre>
-<pre><code>## &lt;environment: 0x000000000a7c91c8&gt;</code></pre>
+<pre><code>## &lt;environment: 0x00000000061224b0&gt;</code></pre>
 <p>函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。</p>
 <p>R语言中除了原始函数，几乎每个函数都是一个闭包，都记录了自己创建环境，特别的如全局环境。</p>
 <p>闭包的两个作用：</p>
@@ -2207,7 +2207,7 @@ lapply(compute_mean, call_fun, x)</code></pre>
 ## 
 ## $manual
 ##    user  system elapsed 
-##     0.1     0.0     0.1</code></pre>
+##    0.09    0.00    0.09</code></pre>
 <p>另一个例子为上面的summary函数，也可以用函数列表实现，</p>
 <pre class="r"><code>x &lt;- 1:10
 funs &lt;- list(
@@ -2303,6 +2303,68 @@ min_max(1:10)</code></pre>
 <li>x$f(z).</li>
 <li>f(z).</li>
 <li>It depends.</li>
+</ol>
+</div>
+<div class="section level4">
+<h4>10.5 案例学习：积分</h4>
+<p>积分的计算有两个规则，矩形近似和梯形近似，代码如下，</p>
+<pre class="r"><code>midpoint &lt;- function(f, a, b) {
+    (b - a) * f((a + b) / 2)
+}
+trapezoid &lt;- function(f, a, b) {
+    (b - a) / 2 * (f(a) + f(b))
+}
+midpoint_composite &lt;- function(f, a, b, n = 10) {
+    points &lt;- seq(a, b, length = n + 1)
+    h &lt;- (b - a) / n
+    area &lt;- 0
+    for (i in seq_len(n)) {
+        area &lt;- area + h * f((points[i] + points[i + 1]) / 2)
+    }
+    area
+}
+
+midpoint(sin, 0, pi)</code></pre>
+<pre><code>## [1] 3.141593</code></pre>
+<pre class="r"><code>trapezoid(sin, 0, pi)</code></pre>
+<pre><code>## [1] 1.923607e-16</code></pre>
+<pre class="r"><code>trapezoid_composite &lt;- function(f, a, b, n = 10) {
+    points &lt;- seq(a, b, length = n + 1)
+    h &lt;- (b - a) / n
+    area &lt;- 0
+    for (i in seq_len(n)) {
+        area &lt;- area + h / 2 * (f(points[i]) + f(points[i + 1]))
+    }
+    area
+}
+
+midpoint_composite(sin, 0, pi, n = 10)</code></pre>
+<pre><code>## [1] 2.008248</code></pre>
+<pre class="r"><code>midpoint_composite(sin, 0, pi, n = 100)</code></pre>
+<pre><code>## [1] 2.000082</code></pre>
+<pre class="r"><code>trapezoid_composite(sin, 0, pi, n = 10)</code></pre>
+<pre><code>## [1] 1.983524</code></pre>
+<pre class="r"><code>trapezoid_composite(sin, 0, pi, n = 100)</code></pre>
+<pre><code>## [1] 1.999836</code></pre>
+<p>观察上面的代码有很多的重复，可以进一步整合，</p>
+<pre class="r"><code>composite &lt;- function(f, a, b, n = 10, rule) {
+    points &lt;- seq(a, b, length = n + 1)
+    area &lt;- 0
+    for (i in seq_len(n)) {
+        area &lt;- area + rule(f, points[i], points[i + 1])
+    }
+    area
+}
+composite(sin, 0, pi, n = 10, rule = midpoint)</code></pre>
+<pre><code>## [1] 2.008248</code></pre>
+<pre class="r"><code>composite(sin, 0, pi, n = 10, rule = trapezoid)</code></pre>
+<pre><code>## [1] 1.983524</code></pre>
+</div>
+<div id="-3" class="section level4">
+<h4>10.5.1 练习</h4>
+<ol style="list-style-type: decimal">
+<li><p>与其创建独立的函数(比如midpoint、trapezoid)，使用函数列表该怎么修改代码？你能够使用Newton-Cotes规则根据一个参数列表创建一个函数列表吗？</p></li>
+<li><p>积分方法的权衡规则是越复杂的方法计算起来越慢，但是分片越少。以sin函数为例，在0到pi区间内，计算达到同一精度各种方法的分片数，用图形展示出来。再试试不同的函数，比如sin(1 / x^2)</p></li>
 </ol>
 </div>
 </div>
