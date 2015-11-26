@@ -1716,7 +1716,7 @@ x
 ```
 
 ```
-##  [1]  1  5  3  4  5  6  7  8  9 10
+##  [1] 1 2 3 4 5 6 7 8 9 5
 ```
 
 #### 6.6 返回值
@@ -1823,7 +1823,7 @@ getwd()
 ```
 
 ```
-## [1] "E:/notes/reading/Advanced R"
+## [1] "F:/notes/reading/Advanced R"
 ```
 
 ```r
@@ -1831,7 +1831,7 @@ in_dir("~", getwd())
 ```
 
 ```
-## [1] "C:/Users/liupa/Documents"
+## [1] "C:/Users/ASUS/Documents"
 ```
 
 注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。
@@ -2666,7 +2666,7 @@ my_search()
 ## [1] "C:/Program Files/R/R-3.2.2/library/methods"
 ## 
 ## [[8]]
-## <environment: 0x0000000005e195e0>
+## <environment: 0x00000000065095b8>
 ## attr(,"name")
 ## [1] "Autoloads"
 ## 
@@ -3426,7 +3426,7 @@ zero <- power(0)
 ```
 
 ```
-## <environment: 0x00000000061224b0>
+## <environment: 0x000000000a3d8250>
 ```
 
 ```r
@@ -3434,7 +3434,7 @@ environment(zero)
 ```
 
 ```
-## <environment: 0x00000000061224b0>
+## <environment: 0x000000000a3d8250>
 ```
 
 函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。
@@ -3683,7 +3683,7 @@ lapply(compute_mean, function(f) system.time(f(x)))
 ## 
 ## $manual
 ##    user  system elapsed 
-##    0.09    0.00    0.09
+##    0.10    0.00    0.09
 ```
 
 另一个例子为上面的summary函数，也可以用函数列表实现，
@@ -3954,4 +3954,108 @@ composite(sin, 0, pi, n = 10, rule = trapezoid)
 
 2. 积分方法的权衡规则是越复杂的方法计算起来越慢，但是分片越少。以sin函数为例，在0到pi区间内，计算达到同一精度各种方法的分片数，用图形展示出来。再试试不同的函数，比如sin(1 / x^2)
 
+### 11.函数化
+
+高阶函数是指以函数作为输入参数或者返回值为函数的函数，闭包就是一个例子，apply，lapply以及sapply为常见的高阶函数。
+
+#### 11.1 lapply的实现
+
+
+```r
+lapply2 <- function(x, f, ...) {
+    out <- vector("list", length(x))
+    for (i in seq_along(x)) {
+        out[[i]] <- f(x[[i]], ...)
+    }
+    out
+}
+```
+
+#### 11.1.1 循环的形式
+
+for循环有三种常用的循环形式：
+
+- for(x in xs)
+- for(i in seq_along(xs))
+- for(nm in names(xs))
+
+与此对应，lapply也有三种用法：
+
+- lapply(xs, function(x) {})
+- lapply(seq_along(xs), function(i) {})
+- lapply(names(xs), function(nm) {})
+
+#### 11.1.2 练习
+
+1.为什么下面的两种方法效果一样？
+
+
+```r
+trims <- c(0, 0.1, 0.2, 0.5)
+x <- rcauchy(100)
+lapply(trims, function(trim) mean(x, trim = trim))
+```
+
+```
+## [[1]]
+## [1] -127.489
+## 
+## [[2]]
+## [1] -0.03154476
+## 
+## [[3]]
+## [1] -0.05182171
+## 
+## [[4]]
+## [1] -0.1483258
+```
+
+```r
+lapply(trims, mean, x = x)
+```
+
+```
+## [[1]]
+## [1] -127.489
+## 
+## [[2]]
+## [1] -0.03154476
+## 
+## [[3]]
+## [1] -0.05182171
+## 
+## [[4]]
+## [1] -0.1483258
+```
+
+2.下面的函数对向量执行标准化，使其值落在[0, 1]的区间内，如何将下面的函数应用到数据框的每一列，如何将其应用到数据框的每一个数值列？
+
+
+```r
+scale01 <- function(x) {
+    rng <- range(x, na.rm = TRUE)
+    (x - rng[1]) / (rng[2] - rng[1])
+}
+
+mcar <- as.data.frame(lapply(mtcars, function(x) if(is.numeric(x)) scale01(x) else x))
+```
+
+3.分别用循环和lapply使用列表的表达式拟合线性模型
+
+
+```r
+formulas <- list(
+    mpg ~ disp,
+    mpg ~ I(1 / disp),
+    mpg ~ disp + wt,
+    mpg ~ I(1 / disp) + wt
+)
+# 循环
+out1 <- vector("list", length(formulas))
+for(i in seq_along(formulas)) {
+    out1[[i]] <- lm(formulas[[i]], mtcars)
+}
+
+out2 <- lapply(formulas, function(f) lm(f, mtcars))
+```
 

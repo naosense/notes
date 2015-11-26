@@ -991,7 +991,7 @@ T %xor% F</code></pre>
 x &lt;- 1:10
 rr(x) &lt;- 5
 x</code></pre>
-<pre><code>##  [1]  1  5  3  4  5  6  7  8  9 10</code></pre>
+<pre><code>##  [1] 1 2 3 4 5 6 7 8 9 5</code></pre>
 </div>
 <div class="section level4">
 <h4>6.6 返回值</h4>
@@ -1047,9 +1047,9 @@ f1() == 1</code></pre>
     force(code)
 }
 getwd()</code></pre>
-<pre><code>## [1] &quot;E:/notes/reading/Advanced R&quot;</code></pre>
+<pre><code>## [1] &quot;F:/notes/reading/Advanced R&quot;</code></pre>
 <pre class="r"><code>in_dir(&quot;~&quot;, getwd())</code></pre>
-<pre><code>## [1] &quot;C:/Users/liupa/Documents&quot;</code></pre>
+<pre><code>## [1] &quot;C:/Users/ASUS/Documents&quot;</code></pre>
 <p>注意，如果想在同一个函数使用多个on.exit必须设置add=TRUE，否则下一个on.exit将会覆盖上一个。</p>
 </div>
 <div id="-10" class="section level4">
@@ -1527,7 +1527,7 @@ my_search()</code></pre>
 ## [1] &quot;C:/Program Files/R/R-3.2.2/library/methods&quot;
 ## 
 ## [[8]]
-## &lt;environment: 0x0000000005e195e0&gt;
+## &lt;environment: 0x00000000065095b8&gt;
 ## attr(,&quot;name&quot;)
 ## [1] &quot;Autoloads&quot;
 ## 
@@ -2016,9 +2016,9 @@ cube(2)</code></pre>
     function(x) x ^ exponent
 }
 zero &lt;- power(0)</code></pre>
-<pre><code>## &lt;environment: 0x00000000061224b0&gt;</code></pre>
+<pre><code>## &lt;environment: 0x000000000a3d8250&gt;</code></pre>
 <pre class="r"><code>environment(zero)</code></pre>
-<pre><code>## &lt;environment: 0x00000000061224b0&gt;</code></pre>
+<pre><code>## &lt;environment: 0x000000000a3d8250&gt;</code></pre>
 <p>函数的执行环境正常情况下，在函数返回值后就会消失，但是当函数返回一个函数的情况下，执行环境不会消失，闭包将会捕获父函数的执行环境，这将会对内存使用造成重要的影响。</p>
 <p>R语言中除了原始函数，几乎每个函数都是一个闭包，都记录了自己创建环境，特别的如全局环境。</p>
 <p>闭包的两个作用：</p>
@@ -2207,7 +2207,7 @@ lapply(compute_mean, call_fun, x)</code></pre>
 ## 
 ## $manual
 ##    user  system elapsed 
-##    0.09    0.00    0.09</code></pre>
+##    0.10    0.00    0.09</code></pre>
 <p>另一个例子为上面的summary函数，也可以用函数列表实现，</p>
 <pre class="r"><code>x &lt;- 1:10
 funs &lt;- list(
@@ -2366,6 +2366,86 @@ composite(sin, 0, pi, n = 10, rule = midpoint)</code></pre>
 <li><p>与其创建独立的函数(比如midpoint、trapezoid)，使用函数列表该怎么修改代码？你能够使用Newton-Cotes规则根据一个参数列表创建一个函数列表吗？</p></li>
 <li><p>积分方法的权衡规则是越复杂的方法计算起来越慢，但是分片越少。以sin函数为例，在0到pi区间内，计算达到同一精度各种方法的分片数，用图形展示出来。再试试不同的函数，比如sin(1 / x^2)</p></li>
 </ol>
+</div>
+</div>
+<div class="section level3">
+<h3>11.函数化</h3>
+<p>高阶函数是指以函数作为输入参数或者返回值为函数的函数，闭包就是一个例子，apply，lapply以及sapply为常见的高阶函数。</p>
+<div id="lapply" class="section level4">
+<h4>11.1 lapply的实现</h4>
+<pre class="r"><code>lapply2 &lt;- function(x, f, ...) {
+    out &lt;- vector(&quot;list&quot;, length(x))
+    for (i in seq_along(x)) {
+        out[[i]] &lt;- f(x[[i]], ...)
+    }
+    out
+}</code></pre>
+</div>
+<div class="section level4">
+<h4>11.1.1 循环的形式</h4>
+<p>for循环有三种常用的循环形式：</p>
+<ul>
+<li>for(x in xs)</li>
+<li>for(i in seq_along(xs))</li>
+<li>for(nm in names(xs))</li>
+</ul>
+<p>与此对应，lapply也有三种用法：</p>
+<ul>
+<li>lapply(xs, function(x) {})</li>
+<li>lapply(seq_along(xs), function(i) {})</li>
+<li>lapply(names(xs), function(nm) {})</li>
+</ul>
+</div>
+<div id="-4" class="section level4">
+<h4>11.1.2 练习</h4>
+<p>1.为什么下面的两种方法效果一样？</p>
+<pre class="r"><code>trims &lt;- c(0, 0.1, 0.2, 0.5)
+x &lt;- rcauchy(100)
+lapply(trims, function(trim) mean(x, trim = trim))</code></pre>
+<pre><code>## [[1]]
+## [1] -127.489
+## 
+## [[2]]
+## [1] -0.03154476
+## 
+## [[3]]
+## [1] -0.05182171
+## 
+## [[4]]
+## [1] -0.1483258</code></pre>
+<pre class="r"><code>lapply(trims, mean, x = x)</code></pre>
+<pre><code>## [[1]]
+## [1] -127.489
+## 
+## [[2]]
+## [1] -0.03154476
+## 
+## [[3]]
+## [1] -0.05182171
+## 
+## [[4]]
+## [1] -0.1483258</code></pre>
+<p>2.下面的函数对向量执行标准化，使其值落在[0, 1]的区间内，如何将下面的函数应用到数据框的每一列，如何将其应用到数据框的每一个数值列？</p>
+<pre class="r"><code>scale01 &lt;- function(x) {
+    rng &lt;- range(x, na.rm = TRUE)
+    (x - rng[1]) / (rng[2] - rng[1])
+}
+
+mcar &lt;- as.data.frame(lapply(mtcars, function(x) if(is.numeric(x)) scale01(x) else x))</code></pre>
+<p>3.分别用循环和lapply使用列表的表达式拟合线性模型</p>
+<pre class="r"><code>formulas &lt;- list(
+    mpg ~ disp,
+    mpg ~ I(1 / disp),
+    mpg ~ disp + wt,
+    mpg ~ I(1 / disp) + wt
+)
+# 循环
+out1 &lt;- vector(&quot;list&quot;, length(formulas))
+for(i in seq_along(formulas)) {
+    out1[[i]] &lt;- lm(formulas[[i]], mtcars)
+}
+
+out2 &lt;- lapply(formulas, function(f) lm(f, mtcars))</code></pre>
 </div>
 </div>
 
