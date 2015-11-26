@@ -249,7 +249,122 @@ PLSQL 提供了几个progma：
 - 从内嵌的代码中引用外层代码的变量具有相同名字的变量
 - 作为GOTO语句的目标
 
+### 第四章 条件和顺序控制
+
+1.if语句
+
+| if类型 | 特点 |
+|--------|--------|
+| if then end if; | 最基本的形式 |
+| if then else end if; | 二选一 |
+| if then elsif else end if; | 多选形式，oracle9以后的版本可以考虑case语句 |
+
+> 三值逻辑
+> 逻辑表达式可能返回值为true，false以及null，但是对于if的条件来说，后两种都视为不通过
 
 
+- - -
+
+> 使用布尔标志，即将布尔值存到一个变量里
+> `order_exceeds_balance := :customer.order_total > max_allowable_order`,这样就可以在if语句中反复使用
+
+避免if语句陷阱
+
+- 一个if要有一个匹配的end if
+- end if之间必须要有空格
+- elsif没有e
+- 只在end if后面加分号
+
+短路求值
+`if condition1 and condition2`
+当condition1为false或null时，plsql就会停止对整个表达式的求值
+
+> 在赋值时这种情况就不同了，例如下面的代码
+> `my_condition := condition1 and condition2`
+> 当condition1为null时，求值不会停止，因为my_condition的值是null还是false取决于condition2的值
+
+2.case语句和表达式
+
+case语句的几种情形：
+
+- 简单case语句
+
+```sql
+CASE expression
+WHEN result1 THEN
+     statement1
+WHEN result2 THEN
+     statement2
+...
+ELSE
+	statement_else
+END CASE;
+```
+
+else语句是可选的，尽管如此，尽量使用else，因为如果when语句没有一条匹配，且没有else，case语句最后会抛出case_not_found错误。
+
+与传统语言的case不同，这里只要有一个情况匹配，执行就会停止，而不用加break。
+
+- 搜索型case语句
+
+```sql
+CASE
+WHEN expression1 THEN
+     statement1
+WHEN expression2 THEN
+     statement2
+...
+ELSE
+	statement_else
+END CASE;
+```
+
+本质上搜索性case语句等同于前面简单case语句的case true情形。
+
+- 嵌套型case语句
+
+case表达式
+
+case表达式有两种情况，如下，
+
+```sql
+简单case表达式 := 
+CASE expression
+WHEN result1 THEN
+     result1_expression
+WHEN result2 THEN
+     result2_expression
+...
+ELSE
+	result_expression_else
+END;
+
+搜索case表达式 :=
+CASE
+WHEN expression1 THEN
+     result1
+WHEN expression2 THEN
+     result2
+...
+ELSE
+	result_else
+END;
+```
+
+case表达式以一个end结束，每个when都关联一个表达式而不是语句，不要加分号。
+
+3.goto语句
+
+goto语句的常见形式为`goto label_name`
+
+goto语句有以下限制：
+
+- 一个标签后面至少有一个执行语句
+- 目标标签必须和goto语句在同一个作用域
+- goto目标标签和goto语句必须在plsql的相同部分
+
+4.null语句
+
+有时候我们需要一条语句什么都不做，null语句就是干这个的，类似于python的pass
 
 
