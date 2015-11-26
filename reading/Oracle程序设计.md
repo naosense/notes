@@ -367,4 +367,77 @@ goto语句有以下限制：
 
 有时候我们需要一条语句什么都不做，null语句就是干这个的，类似于python的pass
 
+### 第五章 用循环进行迭代处理
+
+plsql提供了三种循环：
+
+- 简单循环或无线循环
+- for循环(数值循环和游标循环)
+- while循环
+
+1.简单循环
+
+```sql
+LOOP
+    statements
+END LOOP;
+```
+简单循环只有遇到exit或exit when或者一个异常才会终止。
+
+什么时候用exit和exit when呢？
+
+- 当只有一种情况退出时使用exit when
+- 有多个情况退出使用exit，与if或case搭配使用
+
+2.while循环
+
+```sql
+WHILE condition
+LOOP
+    statement
+END LOOP;
+```
+
+3.数值型for循环
+
+```sql
+FOR loop_index IN [REVERSE] low .. high
+LOOP
+    statement
+END LOOP;
+```
+
+使用数值型for循环的规则：
+
+- 不用声明循环索引，plsql会隐式的声明一个integer类型的局部变量，作用范围是循环本身
+- 如果边界中包含表达式，表达式在进入循环时会求值一次，往后不会改变即使循环体改变了表达式的值
+- 在循环体不要改变索引值和边界值，这是非常不好的习惯
+- 使用reverse关键字时，上下边界的位置不要调换
+- 步长无法调节，永远为1
+
+4.游标for循环
+
+```sql
+FOR record IN {cursor_name | select statement}
+LOOP
+    statement
+END LOOP;
+```
+
+record的类型通过cursor_name的%ROWTYPE属性隐式声明
+
+5.continue语句
+
+作用可以终止本次循环进入下一次
+
+6.迭代处理的技巧
+
+- 循环索引使用容易理解的名字
+- 好的退出方式，one way in，one way out
+ - 在for和while中不要使用exit或exit when，如果不能消除exit可以使用简单循环
+ - 在循环中尽量不要使用return和goto，这会导致不成熟，非结构化的循环结束
+
+7.纯sql和plsql代码的权衡
+
+sql代码往往是全或无的逻辑，比如插入一些数据，只要有一行失败整个sql语句就会失败，而plsql提供了一次访问一条记录的能力，如果你需要这种能力那么就把sql和plsql混合起来使用吧，否则使用sql就够了，这样代码更简洁，效率也更高。
 
