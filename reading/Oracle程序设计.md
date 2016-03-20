@@ -162,6 +162,7 @@ END;
 ```
 
 **规范sql中对变量和列的引用**
+
 对变量和列的引用要通过表的别名、包名、过程名、嵌套块标签进行规范化，这样做的好处，
 
 - 可读性
@@ -192,7 +193,6 @@ IS
         WHERE e.depart_id = localblock.l_inner
         AND e.salary > set_global.l_salary;
      END localblock;
-     
      scope_demo.g_global := set_global.num_in;
   END set_global;
 ```
@@ -219,9 +219,8 @@ IS
 - 注释
 
 > NULL
-在oracle数据库中，缺失值为NULL，一个空字符串（NULL）和0个字符的直接量（''）没有区别。在PLSQL中将一个''赋给varchar2(n)导致的结果就是NULL，而赋给char(n)的结果是使用空格占满这个变量，而在数据库中结果则为NULL
+> 在oracle数据库中，缺失值为NULL，一个空字符串（NULL）和0个字符的直接量（''）没有区别。在PLSQL中将一个''赋给varchar2(n)导致的结果就是NULL，而赋给char(n)的结果是使用空格占满这个变量，而在数据库中结果则为NULL
 
----
 
 在字符串中插入单引号，自oracle10g可以使用q加上字符串来避免里面单引号转义，具体见P68。
 
@@ -230,6 +229,7 @@ IS
 3.PROGMA关键字
 
 progma通常是一行告诉编译器该采取什么行动的代码。
+
 语法为：`PROGMA instruction_to_compiler`
 
 PLSQL 提供了几个progma：
@@ -259,13 +259,12 @@ PLSQL 提供了几个progma：
 | if then else end if; | 二选一 |
 | if then elsif else end if; | 多选形式，oracle9以后的版本可以考虑case语句 |
 
-> 三值逻辑
+> 1.三值逻辑
+> 
 > 逻辑表达式可能返回值为true，false以及null，但是对于if的条件来说，后两种都视为不通过
-
-
-- - -
-
-> 使用布尔标志，即将布尔值存到一个变量里
+> 
+> 2.使用布尔标志，即将布尔值存到一个变量里
+> 
 > `order_exceeds_balance := :customer.order_total > max_allowable_order`,这样就可以在if语句中反复使用
 
 避免if语句陷阱
@@ -275,8 +274,8 @@ PLSQL 提供了几个progma：
 - elsif没有e
 - 只在end if后面加分号
 
-短路求值
-`if condition1 and condition2`
+短路求值：`if condition1 and condition2`
+
 当condition1为false或null时，plsql就会停止对整个表达式的求值
 
 > 在赋值时这种情况就不同了，例如下面的代码
@@ -440,4 +439,30 @@ record的类型通过cursor_name的%ROWTYPE属性隐式声明
 7.纯sql和plsql代码的权衡
 
 sql代码往往是全或无的逻辑，比如插入一些数据，只要有一行失败整个sql语句就会失败，而plsql提供了一次访问一条记录的能力，如果你需要这种能力那么就把sql和plsql混合起来使用吧，否则使用sql就够了，这样代码更简洁，效率也更高。
+
+### 第六章 异常处理
+
+一些概念和术语
+
+异常分类：
+
+- 系统产生的错误
+- 用户导致的错误
+- 应用程序发出的警告
+
+术语：
+
+- 作用范围：可以抛出异常的代码部分，也包括能够铺货和处理抛出异常的代码部分
+- 传播：一个异常没有在当前块处理，从当前块传给外层块的过程
+- 未处理异常：一个异常如果传播到最外层块仍没有被处理，称为未处理异常
+
+1.定义异常
+
+plsql中的异常分为两种：有名或匿名，standard包里定义了一些有名异常，但更大部分的异常都是匿名的。
+
+声明有名异常
+
+- 异常已经存在，现在只不过给它起一个名字，要在过程的声明部分采用`exception_name EXCEPTION`的形式进行声明，然后使用`PROGMA EXCEPTION_INIT(exception_name, errcode)`将异常名称与错误代码关联起来
+- 异常事先不存在，可以使用`RAISE_APPLICATION_ERROR(errcode, errmsg)`进行定义，然后采用上面的方法进行关联
+
 
