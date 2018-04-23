@@ -27,3 +27,9 @@ vignettes/*.pdf
 *.xls
 *.xlsx
 .Rproj.user
+
+# export files
+*.html
+*.pdf
+*.doc
+*.docx

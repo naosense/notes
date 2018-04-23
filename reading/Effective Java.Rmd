@@ -1,0 +1,69 @@
+---
+title: "Effective Java读书笔记"
+output:
+  html_notebook: default
+  word_document: default
+---
+
+### 1、用静态方法代替构造方法
+
+### 2、当构造方法参数比较多时考虑builder模式
+
+### 3、单例模式
+
+### 4、对于工具类，创建一个`private`的构造函数，避免被初始化
+
+具体情形可以参考`java.util.Collections`
+
+### 5、合理使用依赖注入
+
+
+
+平常用的比较多的就是javabean那种方式，这种方式将类的构造分成了多步，在中间会有不一致的状态
+
+### 7、消除过期的引用
+
+```java
+public class Stack {
+    private Object[] elements;
+    private int size;
+    
+    public Object pop() {
+        if (size == 0) {
+            throw new EmptyStackException();
+        }
+        
+        return elements[--size]
+    }
+}
+```
+
+- 使变量拥有最小的作用域
+- 当类自己管理内存时，就要提高警惕
+- 常见内存泄漏场景，比如缓存、listener和callback，比如在缓存场景中可以使用`WeakedHashMap`以及使用一些内存检测工具及时发现问题
+
+### 8、避免使用finalizer和cleaner
+
+finalizer在java 9中已经废弃，使用cleaner代替，二者的行为都不可预测（不会可靠的运行）、危险且不必要
+
+### 9、相对于try-finally，优先使用try-with-resources
+
+比如
+
+```java
+public static String testTryFinally() throws IOException {
+    BufferedReader br = null;
+    try {
+        br = new BufferedReader(new FileReader(""));
+        return br.readLine();
+    } finally {
+        br.close();
+    }
+}
+```
+
+如果使用try-finally，后面的空指针错误会把前面的文件找不到错误覆盖掉，而且当打开多个资源时会造成嵌套的try-finally，代码结构显得杂乱
+
+
+
+
