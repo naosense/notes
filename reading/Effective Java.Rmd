@@ -64,6 +64,67 @@ public static String testTryFinally() throws IOException {
 
 如果使用try-finally，后面的空指针错误会把前面的文件找不到错误覆盖掉，而且当打开多个资源时会造成嵌套的try-finally，代码结构显得杂乱
 
+### 15、对类和属性给予最小的访问权限
+
+这样可以将细节隐藏起来，实现更好的封装和模块化
+
+四种访问权限修饰符
+
+- `private`，只有属性所在的类可以访问
+- `package-private`，只有所在包的类可以访问
+- `protected`，子类和所在包的类可以访问
+- `public`，所有的类都可以访问
+
+如果一个子类重写了父类的方法，拥有的访问权限不会比父类更小，这样可以保证父类适用的地方子类也可以适用（Liskov substitution），一个极致的例子就是接口，实现接口的类方法都是`public`的
+
+一个类的变量尽量不要`public`，不过有一个特例，就是`static final`修饰的原始类型及不可变对象，注意一个`public static final`的数组或者返回数组的方法是不安全的，下面的代码要避免，
+
+```java
+public static final Thing[] VALUES = {};
+```
+
+有两种解决方法：
+
+```java
+private static final Thing[] PRIVATE_VALUES = {};
+public static final List<Thing> VALUES = Collections.unmodifiableList(Arrays.asList(PRIVATE_VALUES));
+```
+
+```java
+private static final Thing[] PRIVATE_VALUES = {};
+
+public static final Thing[] values() {
+    return PRIVATE_VALUES.clone();
+}
+```
+
+### 16、在`public`类中，使用方法访问，而不是`public`属性
+
+这样就放弃了封装的好处，并且无法添加一些附加的动作，但是如果是内部类或者类只在包内访问时可以`public`属性，不过如果包内访问的地方特别多的话，这样感觉如果有变动，修改的成本也很大
+
+### 17、最小化可变性
+
+实现不可变类的方法：
+
+- 不要提供修改状态的方法
+- 类不可继承，可以通过加`final`关键字，更灵活的方法是使用静态工厂方法
+- 所有的属性都设为`final`，事实上这条有点绝对了，只要没有方法能引起状态的改变就可以，例如对于一些不变类，里面可能会有一些非`final`的属性，来缓存一些计算量大的值
+- 所有的属性都是`private`
+- 对于所有的可变组建，都不要让客户代码访问到
+
+不变类的缺点是每个不同的值都得新建一个对象，这可能造成性能问题，比如`String`类，所以在性能问题值得关注的时候，提供一个伴随类，比如`StringBuilder`和`StringBuffer`
+
+如果不变类实现了`Serializable`接口，并且里面有一个或多个可变的属性，你必须提供一个`readObject`或`readResolve`方法，或者使用`ObjectOutputStream.writeUnshared`和`ObjectInputStream.readUnshared`方法（这条没懂，参考item88，回头再补）
+
+除了构造方法和静态工厂方法，不要提供一个公开的初始化方法，因为这可能在多线程环境中导致一个中间状态对象的出现
+
+### 18、组合优于继承（只是类的继承）
+
+
+
+
+
+
 
 
 
