@@ -120,6 +120,136 @@ public static final Thing[] values() {
 
 ### 18、组合优于继承（只是类的继承）
 
+### 19、使用继承时要写出详细的文档，要么就别使用继承
+
+### 20、优先使用接口而不是抽象类
+
+### 21、设计接口为
+
+### 22、接口的唯一作用就是定义类型
+
+不要使用所谓的常量接口，即一个接口里仅仅包括几个常量，会导致继承这个接口的类的内部实现泄露出来，因为接口的属性都是`public`的；而且以后如果类不需要这些常量了，这些常量还会继续存在，有几种解决方式：
+
+- 如果常量属于一个类，那就挪到这个类里
+- 如果可以看做一个枚举，将它们设为枚举
+- 如果你确实需要一个只有常量的对象，使用不能初始化的工具类
+
+### 23、使用继承代替标签类
+
+```java
+class Figure {
+    enum Shape {RECTANGLE, CIRCLE};
+    // Tag field
+    final Shape shape;
+    
+    double length;
+    double width;
+    
+    double radius;
+    
+    Figure(double ridius) {
+        shape = Shape.CIRCLE;
+        this.radius = radius;
+    }
+    
+    Figure(double length, double width) {
+        shape = Shape.RECTANGLE;
+        this.length = length;
+        this.width = width;
+    }
+    
+    double area() {
+        switch(shape) {
+            case RECTANGLE:
+                return length * width;
+            case CIRCLE:
+                return Math.PI * (radius * radius);
+            default:
+                throw new AssertionError(shape);
+        }
+    }
+}
+```
+
+这样的标签类可读性差，逻辑混乱，字段不能设为`final`的，每增加一种类型，就得增加一个`switch`分支，而且还要一些不必要的字段，可以将代码改成下面的
+
+```java
+abstract class Figure {
+    abstract double area();
+}
+
+class Circle extends Figure {
+    final double radius;
+    
+    @Override
+    double area() {
+        // ...
+    }
+}
+
+class Rectangle extends Figure {
+    double length;
+    double width;
+    
+    @Override
+    double area() {
+        // ...
+    }
+}
+```
+
+### 24、尽量使用静态内部类
+
+有四种内部类：
+
+- 静态内部类
+- 非静态内部类，可以获得外部类的引用，这会影响性能
+- 匿名类，当且仅在非静态的上下文中拥有外部类引用，但是不能拥有静态成员，除了常量
+- 局部类，和匿名类类似，出现在方法中
+
+如果内部类不需要获得外部类的引用，那么使用静态内部类，否则使用非静态类
+
+### 25、一个文件一个顶层类
+
+一个java文件中只有一个顶层类，也就是你要在一个文件中包括多个`class`，只能有一个`class`在最外面，无论是不是`public`，其他的都设为内部类，否则程序运行的结果和编译器编译文件的顺序相关
+
+### 26、尽量使用泛型
+
+使用泛型可以在编译期间检查错误，否则只有到运行期间才会报错。
+
+需要注意的是你可以将`List<String>`赋值给`List`，但不能赋值给`List<Object>`。如果有时候你不关心集合中的类型，比如
+
+```java
+static int numElementsInCommon(Set s1, Set s2) {
+    int result = 0;
+    for (Object o1 : s1) {
+        if (s2.contains(o1)) {
+            result++;
+        }
+    }
+    return result;
+}
+```
+，
+它的泛型形式为`Set<?>`，前者你可以添加任何值，后者不能添加任何值，而且你不能对取出的值做任何的推断，如果这不符合需求，可以使用泛型方法和有边界的通配符
+
+不适合泛型的场合：
+
+- 获取类型的`class`，比如`String[].class`，`List.class`
+- 使用`instanceof`判断对象的类型时，比如下面
+
+```java
+if (o instanceof Set) {
+    Set<?> s = (Set<?>) o
+}
+```
+
+### 27、消除非受检警告
+
+
+
+
+
 
 
 
