@@ -244,16 +244,103 @@ if (o instanceof Set) {
 }
 ```
 
-### 27、消除非受检警告
+### 27、消除`unchecked`警告
 
+不要放过任何的`unchecked`警告，因为每个警告都以为着一个潜在的强制转型错误，当你确定类型没问题时可以使用`SuppressWarnings("unchecked")`消除警告，但是一定要把抑制警告的作用域限制到一个比较小的范围
 
+### 28、尽量用`List`代替数组
 
+数组和列表有两点不同，一是数组是协变的，泛型则不然，也就是你可以把`Long[]`赋值给`Object[]`，而泛型列表不然（参考item26），这样数组在运行期才发现错误，而泛型列表编译期间就可以，如果混合能混合使用它们可能会导致一些意想不到的错误，比如下面的代码
 
+```java
+// Fails at runtime
+Object[] objectArray = new Long[1];
+objectArray[0] = "I don't fit in"; // Throw ArrayStoreException
+// Won't compile
+List<Object> ol = new ArrayList<Long>();
+ol.add("I don't fit in");
+```
 
+另一个不同是数组是类型必须具体化的，比如`new List<E>[], new List<String>[], new E[]`都不合法，但是注意虽然泛型创建不可以，但是转化可以，即`(T[])Object[]`是可以的。如果这些合法化的话，编译器自动产生的转化将会导致一些正确的程序出错
 
+```java
+// Generic array creation error
+List<String>[] stringLists = new List<String>[1];
+List<Integer> intList = List.of(42);
+Object[] objects = stringLists;
+object[0] = intList;
+String s = stringLists[0].get(0);
+```
+最后一条语句取出来的是个`int`，转化为`String`就会报错，原因就是数组是协变的，所以后面四条语句都是合法的。当需要泛型的数组时，可以考虑`List`，比如下面的代码
 
+```java
+public class Chooser {
+    private final Object[] choiceArray;
+    
+    public Chooser(Collection c) {
+        choiceArray = c.toArray();
+    }
+    
+    public Object choose() {
+        return choiceArray[random];
+    }
+}
+```
 
+这个类每次调用`choose`方法都得使用强转，如果把`choiceArray`改成`T[]`，又会产生非受检异常，这时候可以把`choiceArray`改成一个泛型列表
 
+### 29、尽量使用泛型
+
+### 30、使用泛型方法
+
+```java
+public static <E> Set<E> union(Set<E> s1, Set<E> s2) {
+    Set<E> result = new HashSet<>(s1);
+    result.addAll(s2);
+    return result;
+}
+```
+注意泛型写在返回值的前面
+
+递归泛型边界，类型参数被一个含有此类型的边界限制住
+
+```java
+public static <E extends Comparable<E>> E max(Collection<E> c);
+```
+
+### 31、使用带边界的通配符增加api的灵活性
+
+假设`Stack`有这么一个方法，
+
+```java
+public void pushAll(Iterable<E> src) {
+    for (E e : src) {
+        push(e);
+    }
+}
+```
+这样一个`Stack<Number>`只能`pushAll(Iterable<Number>)`，但是从情理上一个`Number`的`Stack`还应该支持`Integer`, `Float`等子类型，这个时候单纯的泛型`E`就没法做了，好在泛型还有一个边界的概念，可以这样定义`pushAll`，
+
+```java
+public void pushAll(Iterable<? extends E> src) {
+    for (E e : src) {
+        push(e);
+    }
+}
+```
+假设还有一个`popAll`方法如下，
+
+```java
+public void popAll(Collection<E> dst) {
+    while(!isEmpty()) {
+        dst.add(pop());
+    }
+}
+```
+
+这会面临上面同样的问题，一个`Integer`的`Stack`只能使用一个`Integer`来存储，可以将`Collection<E>`改为`Collection<? super E>`来解决。
+
+不过要注意，如果客户代码如果需要考虑通配符，那么这个api可能不太正常。
 
 
 
