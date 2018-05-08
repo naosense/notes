@@ -340,7 +340,7 @@ public void popAll(Collection<E> dst) {
 
 这会面临上面同样的问题，一个`Integer`的`Stack`只能使用一个`Integer`来存储，可以将`Collection<E>`改为`Collection<? super E>`来解决。
 
-不过要注意，如果客户代码如果需要考虑通配符，那么这个api可能不太正常。
+不过要注意，如果客户代码如果需要考虑通配符，那么这个api肯定是哪里出了问题。
 
 
 
