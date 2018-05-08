@@ -342,6 +342,47 @@ public void popAll(Collection<E> dst) {
 
 不过要注意，如果客户代码如果需要考虑通配符，那么这个api肯定是哪里出了问题。
 
+关于通配符还有一个著名的PECS原则，即producer-extends，consumer-super，不过个人感觉不太好用，这个原则其实是由替换原则衍生出来的，替换原则说的是你可以把子类赋值给这个类的变量，一个函数的参数类也可以用子类代替。根据这个原则可以定义一个应用范围更广的`max`方法
+
+```java
+public static <E extends Comparable<? super E>> E max(Collection<? extends E> c);
+```
+
+另外就是如果泛型参数只用了一次的话可以用通配符代替，这样更简洁一些。
+
+### 32、将泛型和可变参数一起用的时候要小心
+
+可变参数实际上会生成一个数组来存储所有的参数，因此会面临item27类型安全的问题，但是在实际应用中，泛型的可变参数又非常有用，比如`Arrays.asList(T... a)`，因此java的设计者们做了妥协。
+
+如何保证类型安全：
+
+- 不修改可变参数数组
+- 可变数组的引用没有溢出
+
+Java7之前客户只要调用api就会有警告，对于Java7以后的版本可以用`SafeVarargs`注解来消除编译器的警告。注意`SafeVarargs`只能用在不能被重写的方法上，因为没法保证子类方法是安全的。
+
+任何时候你都可以用`List`代替可变参数来消除类型安全的问题。
+
+### 33、使用一种可以同时存储多种类型的类型安全容器
+
+如果你想在一个容器里存储多种类型，可以使用一种*type token*的方法
+
+```java
+class Favorites {
+    private Map<Class<?>, Object> favorites = new HashMap<>();
+    
+    public <T> void put(Class<T> type, T instance) {
+        favorites.put(type, type.cast(instance));
+    }
+    
+    public <T> get(Class<T> type) {
+        return type.cast(favorites.get(type));
+    }
+}
+```
+
+
+
 
 
 
