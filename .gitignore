@@ -24,8 +24,6 @@ vignettes/*.pdf
 *.zip
 
 # office
-*.xls
-*.xlsx
 .Rproj.user
 
 # export files
